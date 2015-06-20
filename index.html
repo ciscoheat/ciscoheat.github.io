@@ -184,8 +184,9 @@
                     {"hitCallback": hitBack(link, target)}
                 );
 
-                /* Prevent standard click */
-                event.preventDefault ? event.preventDefault() : event.returnValue = !1;
+                /* Prevent standard click on left mouse button */
+                if(event.which === 1 || event.button === 0)
+                    event.preventDefault ? event.preventDefault() : event.returnValue = !1;
             }
         }
     }
