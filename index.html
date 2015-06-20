@@ -2,7 +2,7 @@
 <html lang="en-us">
   <head>
     <meta charset="UTF-8">
-    <title>Simplicity and synergy by ciscoheat</title>
+    <title>Simplicity and Synergy by ciscoheat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
@@ -11,7 +11,7 @@
   </head>
   <body>
     <section class="page-header">
-      <h1 class="project-name">Simplicity and synergy</h1>
+      <h1 class="project-name">Simplicity and Synergy</h1>
       <h2 class="project-tagline">Haxe libraries for a better world!</h2>
     </section>
 
@@ -52,7 +52,8 @@
 <tr>
 <td align="left"><a href="https://github.com/ciscoheat/dataclass">dataclass</a></td>
 <td align="center">All</td>
-<td align="left">Data is the very foundation of a system, representing what the system <em>is</em> (compared to functionality that represents what the system <em>does</em>). DataClass helps you define the foundation of your system, simple data objects, using a minimal Haxe syntax.</td>
+<td align="left">Data is the very foundation of a system, representing what the system <em>is</em> (compared to functionality that represents what the system <em>does</em>). DataClass helps you define the foundation of your system, simple data objects, using a minimal Haxe syntax. <strong>New:</strong> Check out the crude but useful <a href="https://ciscoheat.github.io/dataclassgen.html">DataClass generator</a>
+</td>
 </tr>
 <tr>
 <td align="left"><a href="https://github.com/ciscoheat/mithril-hx">mithril-hx</a></td>
@@ -150,53 +151,7 @@
 
     </section>
 
-    <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-    ga('create', 'UA-20869379-2', 'auto');
-    ga('send', 'pageview');
-
-    function _gaLt(event){
-        var el = event.srcElement || event.target;
-
-        /* Loop up the DOM tree through parent elements if clicked element is not a link (eg: an image inside a link) */
-        while(el && (typeof el.tagName == 'undefined' || el.tagName.toLowerCase() != 'a' || !el.href)){
-            el = el.parentNode;
-        }
-
-        if(el && el.href){
-            /* link */
-            var link = el.href;
-            if(link.indexOf(location.host) == -1 && !link.match(/^javascript\:/i)){ /* external link */
-                /* HitCallback function to either open link in either same or new window */
-                var hitBack = function(link, target){
-                    target ? window.open(link, target) : window.location.href = link;
-                };
-                /* Is target set and not _(self|parent|top)? */
-                var target = (el.target && !el.target.match(/^_(self|parent|top)$/i)) ? el.target : false;
-                /* If right/middle mouse was clicked, open in new tab too */
-                if(target === false && event.which !== 1 && event.button !== 0) target = "_blank";
-                /* send event with callback */
-                ga(
-                    "send", "event", "Outgoing Links", link,
-                    document.location.pathname + document.location.search,
-                    {"hitCallback": hitBack(link, target)}
-                );
-
-                /* Prevent standard click */
-                event.preventDefault ? event.preventDefault() : event.returnValue = !1;
-            }
-        }
-    }
-
-    /* Attach the event to all clicks in the document after page has loaded */
-    var w = window;
-    w.addEventListener ? w.addEventListener("load",function(){document.body.addEventListener("click",_gaLt,!1)},!1)
-     : w.attachEvent && w.attachEvent("onload",function(){document.body.attachEvent("onclick",_gaLt)});          
-    </script>
+  
   </body>
 </html>
 
