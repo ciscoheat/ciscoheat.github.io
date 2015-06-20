@@ -178,7 +178,7 @@
                 /* Is target set and not _(self|parent|top)? */
                 var target = (el.target && !el.target.match(/^_(self|parent|top)$/i)) ? el.target : false;
                 /* If right/middle mouse was clicked, open in new tab too */
-                if(target === false && event.which !== 1 && event.button !== 0) target = el.target;
+                if(target === false && event.which !== 1 && event.button !== 0) target = "_blank";
                 /* send event with callback */
                 ga(
                     "send", "event", "Outgoing Links", link,
