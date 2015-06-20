@@ -42,28 +42,28 @@
 <tr>
 <td align="left"><a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a></td>
 <td align="center">All</td>
-<td align="left">Contracts is a way out of the wasteful unit testing that the current programming paradigm seems to force most programmers into. Using Contracts you will move most tests into the real code, and greatly improve the integrity of your objects.</td>
+<td align="left">Contracts is a way out of the wasteful unit testing that the current programming paradigm force most programmers into. Using Contracts you will move tests into program code, and greatly improve the integrity of your objects.</td>
 </tr>
 <tr>
 <td align="left"><a href="https://github.com/ciscoheat/buddy">buddy</a></td>
 <td align="center">All</td>
-<td align="left">Most interesting things happens between objects, not within them, and this is where the level of code-based testing should be. Buddy is a <a href="https://en.wikipedia.org/wiki/Behavior-driven_development">BDD</a> library for helping you move the testing mentality upwards, from method-level to interactions between objects.</td>
+<td align="left">The interesting things in a system usually happens between objects, and this is where most code-based testing should be. Buddy is a <a href="https://en.wikipedia.org/wiki/Behavior-driven_development">BDD</a> library for helping you move the testing mentality upwards, from method-level to interactions between objects.</td>
 </tr>
 <tr>
 <td align="left"><a href="https://github.com/ciscoheat/dataclass">dataclass</a></td>
 <td align="center">All</td>
-<td align="left">Data is the very foundation of a system, representing what the system is (compared to functionality that represent what it does). DataClass helps you define the foundation of your system, simple data objects, with a short, natural syntax.</td>
+<td align="left">Data is the very foundation of a system, representing what the system <em>is</em> (compared to functionality that represents what the system <em>does</em>). DataClass helps you define the foundation of your system, simple data objects, using a minimal Haxe syntax.</td>
 </tr>
 <tr>
 <td align="left"><a href="https://github.com/ciscoheat/mithril-hx">mithril-hx</a></td>
 <td align="center">Browser, Node.js</td>
 <td align="left">
-<a href="mithril.js.org">Mithril</a> is a small, yet great javascript MVC framework that is faster and more flexible than most others. Here are Haxe externs for a library that enables you to solve complex problems with simple tools.</td>
+<a href="mithril.js.org">Mithril</a> is a small, yet great javascript MVC framework that is faster and more flexible than most others. Here are Haxe externs for this library, which lets you solve complex problems with simple tools.</td>
 </tr>
 <tr>
 <td align="left"><a href="https://github.com/ciscoheat/slambda">slambda</a></td>
 <td align="center">All</td>
-<td align="left">Do you crave Short Lambdas? Here's a tiny library that adds those convenient <code>x =&gt; x + 1</code> expressions to your Haxe code in only one extra line.</td>
+<td align="left">Do you crave Short Lambdas? Understandable, every other language have them. Here's a tiny library that adds those convenient <code>x =&gt; x + 1</code> expressions to your Haxe code with a single <code>using</code> statement.</td>
 </tr>
 <tr>
 <td align="left"><a href="https://github.com/ciscoheat/haxelow">haxelow</a></td>
@@ -93,11 +93,48 @@
 <tr>
 <td align="left"><a href="https://github.com/ciscoheat/viagrant">viagrant</a></td>
 <td align="center">All and more</td>
-<td align="left">If you're using <a href="https://www.vagrantup.com/">Vagrant</a>, this will get a box with all your Haxe needs up and running in a few minutes. It also supports a very convenient CMS, <a href="http://www.concrete5.org/">concrete5</a>
-</td>
+<td align="left">If you're using <a href="https://www.vagrantup.com/">Vagrant</a>, this will get a box with all your Haxe needs up and running in a few minutes. It also supports LAMP, a very convenient CMS, <a href="http://www.concrete5.org/">concrete5</a>, and some other goodies.</td>
 </tr>
 </tbody>
 </table>
+
+<h2>
+<a id="synergy-between-the-libraries" class="anchor" href="#synergy-between-the-libraries" aria-hidden="true"><span class="octicon octicon-link"></span></a>Synergy between the libraries</h2>
+
+<p>Here's how I picture a system using the above libraries:</p>
+
+<h3>
+<a id="setting-up" class="anchor" href="#setting-up" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setting up</h3>
+
+<ol>
+<li>Clone <a href="https://github.com/ciscoheat/empty-haxe-project">empty-haxe-project</a> to a directory and follow the <code>README.md</code> instructions to rename the project</li>
+<li>If you want, use <a href="https://github.com/ciscoheat/viagrant">viagrant</a> to create the configuration for a Vagrant virtual machine in the same directory, starting it with <code>vagrant up</code>.</li>
+</ol>
+
+<h3>
+<a id="designing-the-system" class="anchor" href="#designing-the-system" aria-hidden="true"><span class="octicon octicon-link"></span></a>Designing the system</h3>
+
+<ol>
+<li>Create the data objects with <a href="https://github.com/ciscoheat/dataclass">dataclass</a> and validate their integrity with <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> when needed</li>
+<li>Use <a href="https://github.com/ciscoheat/buddy">buddy</a> to draw up the guidelines for the system behavior using pending tests</li>
+<li>Let the data objects interact in Contexts with the help of <a href="https://github.com/ciscoheat/haxedci">haxedci</a>, fleshing out the pending buddy tests with testing of the Contexts. <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> will be of use too in the Contexts.</li>
+</ol>
+
+<h3>
+<a id="programming-style" class="anchor" href="#programming-style" aria-hidden="true"><span class="octicon octicon-link"></span></a>Programming style</h3>
+
+<ol>
+<li>Use <a href="https://github.com/ciscoheat/slambda">slambda</a> for functional programming and asynchronous calls with short and convenient lambda expressions.</li>
+</ol>
+
+<h3>
+<a id="implementation-details" class="anchor" href="#implementation-details" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implementation details</h3>
+
+<ol>
+<li>Let users interact with your system in an impressive browser app built with <a href="https://github.com/ciscoheat/mithril-hx">mithril-hx</a>
+</li>
+<li>For data storage where speed isn't a big concern, use the convenient JSON storage of <a href="https://github.com/ciscoheat/haxelow">haxelow</a>.</li>
+</ol>
 
 <h2>
 <a id="contact-info" class="anchor" href="#contact-info" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contact info</h2>
