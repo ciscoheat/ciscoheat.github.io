@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<title>Quick syntax to class</title>
+	<style type="text/css">
+	textarea {
+		width: 600px;
+		height: 700px;
+	}
+	</style>
+</head>
+<body>
+<h2>DataClass quick class builder</h2>
+<p><strong>Syntax help:</strong></p>
+<pre>[-+?]fieldName type defaultValue (validation)</pre>
+<p>
+type can be abbreviated to the first character of common types.<br>
+The first row can be a package.ClassName string.<br>
+</p>
+<p><button>Load an example</button></p>
+
+<textarea id="quick"></textarea>
+<textarea id="generated"></textarea>
+<p><a href="https://github.com/ciscoheat/dataclass">DataClass on Github</a></p>
+<p><a href="https://ciscoheat.github.io/">More Haxe libraries</a></p>
+<script>
+	var quick = document.querySelector('#quick');
+
+	var toField = function(s) {
+		var t = s.trim().split(/\s+/);
+
+		// Search for comments or empty strings
+		if(t.length == 1 || t[0].search(/^([\/\*]+)/) >= 0) return '\t' + s;
+
+		// Extract name and type
+		var name = t[0];
+		var type = t.length > 1 ? t[1] : "";
+
+		// Extract if field should be optional
+		var optional = false;
+		if(name.indexOf('?') >= 0) {
+			optional = true;
+			name = name.replace('?', '');
+		}
+
+		// Extract property
+		var prop = '';
+		if(name.indexOf('-') >= 0) {
+			prop = '(default, null)';
+			name = name.replace('-', '');
+		}
+		else if(name.indexOf('+') >= 0) {
+			prop = '(default, default)';
+			name = name.replace('+', '');
+		}
+
+		// Extract default value and validation
+		var def = t.length > 2 && t[2][0] != '(' ? " = " + t[2] : "";
+		var val = s.indexOf('(') > 0 ? s.substr(s.indexOf('(')) : '';
+
+		// Expand type abbreviations
+		switch(type.toLowerCase()) {
+			case 'i': type = 'Int'; break;
+			case 'b': type = 'Bool'; break;
+			case 'f': type = 'Float'; break;
+			case 's': type = 'String'; break;
+			case 'd': type = 'Date'; break;
+		}
+
+		// Build the field string and return it
+		if(optional) type = 'Null<' + type + '>';
+		if(val) val = '\t' + '@validate' + val + '\n';
+
+		return val + '\t' + 'public var ' + name + prop + ' : ' + type + def + ';';
+	}
+
+	var convert = function() {
+		try {
+			quick.style.backgroundColor = '#fff';
+			var cls = quick.value.trim().split(/\r?\n/).map(toField);
+
+			// Extract class name and package if available on first row
+			var name = "[NAME]";
+			var pkg = '';
+
+			if(cls.length > 0 && cls[0].trim().search(/^([\w.]+\.)?[A-Z]\w*$/) >= 0) {				
+				name = cls.shift().trim();
+
+				if(name.indexOf('.') > 0) {
+					var split = name.lastIndexOf('.');
+					pkg = 'package ' + name.substr(0, split) + ';\n\n';
+					name = name.substr(split+1);
+				}
+			}
+
+			var str = pkg + 'class '+ name + ' implements dataclass.DataClass\n{\n';
+			str += cls.join('\n') + '\n}\n';
+
+			document.getElementById('generated').value = str;
+		} catch(ex) {
+			console.log(ex);
+			quick.style.backgroundColor = '#fbb';
+		}
+	};
+
+	quick.addEventListener('input', convert);
+	quick.focus();
+	document.querySelector('button').addEventListener('click', function() {
+		var v = ['mypack.MyTestClass', '-id i', '?name s', '', 'state s (_.length == 2)', '', '// Comment', 'created d'];
+		quick.value = v.join('\n');
+		convert();
+	});
+</script>
+</body>
+</html>
