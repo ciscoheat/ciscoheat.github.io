@@ -177,6 +177,8 @@
                 };
                 /* Is target set and not _(self|parent|top)? */
                 var target = (el.target && !el.target.match(/^_(self|parent|top)$/i)) ? el.target : false;
+                /* If right/middle mouse was clicked, open in new tab too */
+                if(target === false && event.which !== 1 && event.button !== 0) target = el.target;
                 /* send event with callback */
                 ga(
                     "send", "event", "Outgoing Links", link,
@@ -184,9 +186,8 @@
                     {"hitCallback": hitBack(link, target)}
                 );
 
-                /* Prevent standard click on left mouse button */
-                if(event.which === 1 || event.button === 0)
-                    event.preventDefault ? event.preventDefault() : event.returnValue = !1;
+                /* Prevent standard click */
+                event.preventDefault ? event.preventDefault() : event.returnValue = !1;
             }
         }
     }
