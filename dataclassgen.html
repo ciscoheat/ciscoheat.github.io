@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8"/>
-	<title>Quick syntax to class</title>
+	<title>DataClass quick class builder</title>
 	<style type="text/css">
 	textarea {
 		width: 600px;
@@ -13,7 +13,7 @@
 <body>
 <h2>DataClass quick class builder</h2>
 <p><strong>Syntax help:</strong></p>
-<pre>[-+?]fieldName type defaultValue (validation)</pre>
+<pre>[-+?]fieldName type defaultValue @(validation)</pre>
 <p>
 type can be abbreviated to the first character of common types.<br>
 The first row can be a package.ClassName string.<br>
@@ -55,9 +55,16 @@ The first row can be a package.ClassName string.<br>
 			name = name.replace('+', '');
 		}
 
-		// Extract default value and validation
-		var def = t.length > 2 && t[2][0] != '(' ? " = " + t[2] : "";
-		var val = s.indexOf('(') > 0 ? s.substr(s.indexOf('(')) : '';
+		// Extract validation
+		var valTest = s.match(/@\(.+\)\s*$/);
+		var val = valTest ? valTest[0].substr(1) : '';
+		if(valTest) {
+			s = s.substr(0, valTest.index);
+			t = t.pop();
+		}
+
+		// Extract default value
+		var def = t.length > 2 ? " = " + s.substr(s.indexOf(t[2])) : "";
 
 		// Expand type abbreviations
 		switch(type.toLowerCase()) {
@@ -107,7 +114,7 @@ The first row can be a package.ClassName string.<br>
 	quick.addEventListener('input', convert);
 	quick.focus();
 	document.querySelector('button').addEventListener('click', function() {
-		var v = ['mypack.MyTestClass', '-id i', '?name s', '', 'state s (_.length == 2)', '', '// Comment', 'created d'];
+		var v = ['mypack.MyTestClass', '-id i', '?name s', '', 'state s @(_.length == 2)', '', '// Comment', 'created d Date.now()'];
 		quick.value = v.join('\n');
 		convert();
 	});
