@@ -1,5 +1,5 @@
 (function (console) { "use strict";
-var $hxClasses = {},$estr = function() { return js_Boot.__string_rec(this,''); };
+var $hxClasses = {};
 function $extend(from, fields) {
 	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
 	for (var name in fields) proto[name] = fields[name];
@@ -238,27 +238,20 @@ StringTools.fastCodeAt = function(s,index) {
 };
 var ValueType = $hxClasses["ValueType"] = { __ename__ : ["ValueType"], __constructs__ : ["TNull","TInt","TFloat","TBool","TObject","TFunction","TClass","TEnum","TUnknown"] };
 ValueType.TNull = ["TNull",0];
-ValueType.TNull.toString = $estr;
 ValueType.TNull.__enum__ = ValueType;
 ValueType.TInt = ["TInt",1];
-ValueType.TInt.toString = $estr;
 ValueType.TInt.__enum__ = ValueType;
 ValueType.TFloat = ["TFloat",2];
-ValueType.TFloat.toString = $estr;
 ValueType.TFloat.__enum__ = ValueType;
 ValueType.TBool = ["TBool",3];
-ValueType.TBool.toString = $estr;
 ValueType.TBool.__enum__ = ValueType;
 ValueType.TObject = ["TObject",4];
-ValueType.TObject.toString = $estr;
 ValueType.TObject.__enum__ = ValueType;
 ValueType.TFunction = ["TFunction",5];
-ValueType.TFunction.toString = $estr;
 ValueType.TFunction.__enum__ = ValueType;
-ValueType.TClass = function(c) { var $x = ["TClass",6,c]; $x.__enum__ = ValueType; $x.toString = $estr; return $x; };
-ValueType.TEnum = function(e) { var $x = ["TEnum",7,e]; $x.__enum__ = ValueType; $x.toString = $estr; return $x; };
+ValueType.TClass = function(c) { var $x = ["TClass",6,c]; $x.__enum__ = ValueType; return $x; };
+ValueType.TEnum = function(e) { var $x = ["TEnum",7,e]; $x.__enum__ = ValueType; return $x; };
 ValueType.TUnknown = ["TUnknown",8];
-ValueType.TUnknown.toString = $estr;
 ValueType.TUnknown.__enum__ = ValueType;
 var Type = function() { };
 $hxClasses["Type"] = Type;
@@ -1050,15 +1043,12 @@ haxe_io_Bytes.prototype = {
 };
 var haxe_io_Error = $hxClasses["haxe.io.Error"] = { __ename__ : ["haxe","io","Error"], __constructs__ : ["Blocked","Overflow","OutsideBounds","Custom"] };
 haxe_io_Error.Blocked = ["Blocked",0];
-haxe_io_Error.Blocked.toString = $estr;
 haxe_io_Error.Blocked.__enum__ = haxe_io_Error;
 haxe_io_Error.Overflow = ["Overflow",1];
-haxe_io_Error.Overflow.toString = $estr;
 haxe_io_Error.Overflow.__enum__ = haxe_io_Error;
 haxe_io_Error.OutsideBounds = ["OutsideBounds",2];
-haxe_io_Error.OutsideBounds.toString = $estr;
 haxe_io_Error.OutsideBounds.__enum__ = haxe_io_Error;
-haxe_io_Error.Custom = function(e) { var $x = ["Custom",3,e]; $x.__enum__ = haxe_io_Error; $x.toString = $estr; return $x; };
+haxe_io_Error.Custom = function(e) { var $x = ["Custom",3,e]; $x.__enum__ = haxe_io_Error; return $x; };
 var haxe_io_FPHelper = function() { };
 $hxClasses["haxe.io.FPHelper"] = haxe_io_FPHelper;
 haxe_io_FPHelper.__name__ = ["haxe","io","FPHelper"];
@@ -1494,26 +1484,22 @@ webshop_Checkout.__name__ = ["webshop","Checkout"];
 webshop_Checkout.__interfaces__ = [mithril_View];
 webshop_Checkout.prototype = {
 	view: function() {
-		return [m.m("h1","Checkout"),m.m("form.form-horizontal[role=form]",this.checkoutForm.map($bind(this,this.formFields)).concat([m.m("div.form-group",m.m("div.col-sm-offset-1.col-sm-5",m.m("button.btn.btn-success","Submit order")))]))];
+		return [m.m("H1","Checkout"),m.m("FORM.form-horizontal[role=form]",this.checkoutForm.map($bind(this,this.formFields)).concat([m.m("DIV.form-group",m.m("DIV.col-sm-offset-1.col-sm-5",m.m("BUTTON.btn.btn-success","Submit order")))]))];
 	}
 	,formFields: function(f) {
 		var required = f.required != false;
-		return m.m("div.form-group",[m.m("label.col-sm-1.control-label",{ 'for' : f.id},f.label + (required?"*":"")),m.m("div",{ 'class' : "col-sm-" + (f.width == null?5:f.width)},m.m("input",{ 'class' : "form-control", required : required, type : f.type == null?"text":f.type, name : f.id, id : f.id}))]);
+		return m.m("DIV.form-group",[m.m("LABEL.col-sm-1.control-label",{ 'for' : f.id},f.label + (required?"*":"")),m.m("DIV",{ 'class' : "col-sm-" + (f.width == null?5:f.width)},m.m("INPUT",{ 'class' : "form-control", required : required, type : f.type == null?"text":f.type, name : f.id, id : f.id}))]);
 	}
 	,__class__: webshop_Checkout
 };
 var webshop_LoadState = $hxClasses["webshop.LoadState"] = { __ename__ : ["webshop","LoadState"], __constructs__ : ["Started","Delayed","Done","Error"] };
 webshop_LoadState.Started = ["Started",0];
-webshop_LoadState.Started.toString = $estr;
 webshop_LoadState.Started.__enum__ = webshop_LoadState;
 webshop_LoadState.Delayed = ["Delayed",1];
-webshop_LoadState.Delayed.toString = $estr;
 webshop_LoadState.Delayed.__enum__ = webshop_LoadState;
 webshop_LoadState.Done = ["Done",2];
-webshop_LoadState.Done.toString = $estr;
 webshop_LoadState.Done.__enum__ = webshop_LoadState;
 webshop_LoadState.Error = ["Error",3];
-webshop_LoadState.Error.toString = $estr;
 webshop_LoadState.Error.__enum__ = webshop_LoadState;
 var webshop_Loader = function(untilDelay,untilError) {
 	if(untilError == null) untilError = 5000;
@@ -1678,12 +1664,9 @@ webshop_ProductPage.prototype = {
 		},($_=this.loading,$bind($_,$_.error)));
 		return this;
 	}
-	,cart_add: function(e,p) {
+	,addToCart: function(p,e) {
 		this.cart.add(p);
 		this.cart.open();
-	}
-	,lorem: function() {
-		return StringTools.trim("Cupcake ipsum dolor sit amet pudding. Tiramisu marshmallow cotton candy fruitcake gummies candy gummi bears. Powder pastry oat cake oat cake dragée soufflé apple pie. Chocolate bar bear claw cupcake I love dragée toffee oat cake marshmallow bonbon. Fruitcake marshmallow I love pudding I love jelly beans carrot cake biscuit. Lollipop brownie tart apple pie cotton candy sugar plum candy. Topping lollipop wafer cotton candy fruitcake toffee.\r\nMacaroon candy canes lemon drops sugar plum topping pudding. Lemon drops chocolate cupcake cheesecake. Jelly beans soufflé sugar plum donut cheesecake I love ice cream caramels. Muffin gummies toffee candy canes. Jelly beans I love fruitcake dragée chocolate. Chocolate bar candy canes danish soufflé. I love cotton candy liquorice jelly.\r\nLiquorice applicake tiramisu I love tiramisu applicake pie brownie applicake. Toffee danish tiramisu pie. Dessert jelly pudding marzipan jelly. Tootsie roll donut marshmallow jujubes marshmallow lollipop cookie brownie gummies. Brownie candy canes brownie. Fruitcake dessert toffee apple pie chocolate cake powder chocolate. Tart muffin jelly ice cream liquorice marzipan. Icing brownie liquorice I love ice cream.\r\nToffee danish icing cheesecake I love. Cake croissant sweet topping jelly-o marzipan topping jelly-o sweet. Dragée I love cupcake I love sugar plum brownie apple pie. I love lollipop gummi bears soufflé gummi bears apple pie dragée tootsie roll candy canes. Lemon drops applicake fruitcake candy canes liquorice. Ice cream cookie brownie jujubes icing. Candy canes I love bonbon danish. Jelly jelly beans chocolate bar pastry biscuit ice cream chocolate cake jelly beans. Candy chupa chups jujubes ice cream. Tootsie roll tart caramels cupcake.\r\nMarzipan applicake ice cream brownie tart donut cake. Sweet roll soufflé tiramisu pastry gummi bears candy sweet roll topping apple pie. Dessert lemon drops fruitcake icing icing I love. Dragée fruitcake I love I love pie. Halvah dragée sweet cotton candy pudding apple pie chupa chups. Bear claw cotton candy I love muffin muffin unerdwear.com soufflé croissant. Cookie cookie danish tart sweet cheesecake.\r\n").split("\n");
 	}
 	,view: function() {
 		var _g = this;
@@ -1701,15 +1684,15 @@ webshop_ProductPage.prototype = {
 		var button = function() {
 			return m.m("BUTTON.btn.btn-lg.btn-success[type=button]",{ onclick : (function(f,p) {
 				return function(e) {
-					f(e,p);
+					f(p,e);
 				};
-			})($bind(_g,_g.cart_add),_g.product)},"Add to Cart");
+			})($bind(_g,_g.addToCart),_g.product)},"Add to Cart");
 		};
-		return [m.m("DIV.row",m.m("DIV.col-xs-12",m.m("H1",this.product.name))),m.m("DIV.row",[m.m("DIV.col-xs-12.col-sm-12.col-md-7.col-lg-6",[m.m("IMG[data-src='holder.js/100%x450/auto/random']",{ config : function(el,isInit) {
+		return [m.m("DIV.row",m.m("DIV.col-xs-12",m.m("H1",this.product.name))),m.m("DIV.row",[m.m("DIV.col-xs-12.col-sm-12.col-md-7.col-lg-6",[m.m("IMG[data-src='holder.js/100px450?auto=yes&random=yes']",{ config : function(el,isInit) {
 			if(!isInit) {
 				Holder.run();
 			}
-		}}),m.m("DIV.clearfix",{ style : { 'margin' : "10px"}}),m.m("DIV.row",[m.m("DIV.col-xs-2",m.m("DIV.h2","$" + this.product.price)),m.m("DIV.col-xs-4",m.m("DIV.h2",this.product.stock > 0?m.m("button"):m.m("H3","Out of stock")))])]),m.m("DIV.col-xs-12.col-sm-12.col-md-5.col-lg-6",this.lorem().map(function(l) {
+		}}),m.m("DIV.clearfix",{ style : { 'margin' : "10px"}}),m.m("DIV.row",[m.m("DIV.col-xs-2",m.m("DIV.h2","$" + this.product.price)),m.m("DIV.col-xs-4",m.m("DIV.h2",this.product.stock > 0?button():m.m("H3","Out of stock")))])]),m.m("DIV.col-xs-12.col-sm-12.col-md-5.col-lg-6",webshop_ProductPage.lorem.map(function(l) {
 			return m.m("P",l);
 		}))])];
 	}
@@ -1767,7 +1750,7 @@ webshop_ShoppingCart.prototype = $extend(haxe_ds_ObjectMap.prototype,{
 		var $it0 = $iterator(this.products())();
 		while( $it0.hasNext() ) {
 			var p = $it0.next();
-			m.m("output.set",p.id,this.h[p.__id__]);
+			output.set(p.id,this.h[p.__id__]);
 		}
 		js_Browser.getLocalStorage().setItem("cart",haxe_Serializer.run(output));
 	}
@@ -1816,9 +1799,9 @@ webshop_ShoppingCart.prototype = $extend(haxe_ds_ObjectMap.prototype,{
 		var html = window.document.documentElement;
 		this.isOpen = true;
 		this.dropDownMenu.style.width = "auto";
-		m.m("html.removeEventListener","click",$bind(this,this.clickOutsideCart));
+		html.removeEventListener("click",$bind(this,this.clickOutsideCart));
 		haxe_Timer.delay(function() {
-			m.m("html.addEventListener","click",$bind(_g,_g.clickOutsideCart));
+			html.addEventListener("click",$bind(_g,_g.clickOutsideCart));
 			_g.dropDownMenu.style.width = Std.string(_g.dropDownMenu.offsetWidth) + "px";
 			m.endComputation();
 		},10);
@@ -1835,11 +1818,12 @@ webshop_ShoppingCart.prototype = $extend(haxe_ds_ObjectMap.prototype,{
 	,view: function() {
 		var _g = this;
 		return [m.m("LI",{ 'class' : this.isOpen?"dropdown open":"dropdown", config : function(el,isInit) {
-			if(isInit) return;
-			_g.cartParent = el.parentElement;
-			el.addEventListener("hide.bs.dropdown",function() {
-				return false;
-			});
+			if(!isInit) {
+				_g.cartParent = el.parentElement;
+				el.addEventListener("hide.bs.dropdown",function() {
+					return false;
+				});
+			}
 		}},[m.m("A.dropdown-toggle",{ href : "#", role : "button", 'aria-expanded' : false, onclick : $bind(this,this.open)},["Shopping cart ",m.m("SPAN.caret")]),m.m("UL.dropdown-menu",{ role : "menu", config : function(el1,isInit1) {
 			if(!isInit1) _g.dropDownMenu = el1;
 		}},this.items())]),m.m("LI",Lambda.empty(this)?m.m("SPAN","Proceed to checkout"):m.m("A[href='/checkout']",{ config : m.route},"Proceed to checkout"))];
@@ -1850,13 +1834,12 @@ webshop_ShoppingCart.prototype = $extend(haxe_ds_ObjectMap.prototype,{
 		var total = 0.0;
 		var products = Lambda.concat(Lambda.map(this.products(),function(p) {
 			var subTotal = p.price * _g.h[p.__id__];
-			var name = " " + p.name + " | $" + subTotal;
 			total += subTotal;
 			return m.m("LI",m.m("A",[m.m("input[type=number]",{ min : 0, value : _g.h[p.__id__], style : { width : "36px"}, oninput : m.withAttr("value",(function(f,a1) {
 				return function(v) {
 					f(a1,v);
 				};
-			})($bind(_g,_g.set),p))}),name]));
+			})($bind(_g,_g.set),p))}),m.m("SPAN",m.m("A",{ config : m.route, href : "/product/" + p.id}," " + p.name)," | $" + subTotal)]));
 		}),[m.m("LI.divider"),m.m("LI",m.m("A","Total: $" + total))]);
 		return Lambda.array(products);
 	}
@@ -1881,11 +1864,11 @@ webshop_Webshop.prototype = {
 		m.mount(this.element("shopping-cart"),this.cart);
 		m.mount(this.element("search"),this.search);
 		m.mount(this.element("home-link"),{ view : function() {
-			return m.m("a.navbar-brand[href='/']",{ config : m.route},"Mithril Webshop");
+			return m.m("a.navbar-brand[href='/']",{ config : m.route},"Mithril/Haxe Webshop");
 		}});
 	}
 	,view: function() {
-		return [m.m("H1[id=welcome].test","Welcome!"),m.m("P","Select a category on the left."),m.m("H2","Todo"),m.m("UL.list-group",this.todo().map(function(t) {
+		return [m.m("H1","Welcome!"),m.m("P","Select a category on the left to start shopping."),m.m("P","Built in Haxe & Mithril. Source code: ",m.m("A[href=\"https://github.com/ciscoheat/mithril-hx/tree/master/example/webshop\"][target=\"_blank\"]","https://github.com/ciscoheat/mithril-hx/tree/master/example/webshop")),m.m("H2","Todo"),m.m("UL.list-group",this.todo().map(function(t) {
 			var done = StringTools.startsWith(t.toLowerCase(),"x ");
 			return m.m("LI.list-group-item",{ style : { textDecoration : done?"line-through":"none"}},[m.m("INPUT[type=checkbox]",{ checked : done?"checked":""}),m.m("SPAN[style='margin-left:5px']",done?t.substring(2):t)]);
 		}))];
@@ -2044,5 +2027,6 @@ haxe_io_FPHelper.i64tmp = (function($this) {
 }(this));
 js_Boot.__toStr = {}.toString;
 js_html_compat_Uint8Array.BYTES_PER_ELEMENT = 1;
+webshop_ProductPage.lorem = StringTools.trim("Cupcake ipsum dolor sit amet pudding. Tiramisu marshmallow cotton candy fruitcake gummies candy gummi bears. Powder pastry oat cake oat cake dragée soufflé apple pie. Chocolate bar bear claw cupcake I love dragée toffee oat cake marshmallow bonbon. Fruitcake marshmallow I love pudding I love jelly beans carrot cake biscuit. Lollipop brownie tart apple pie cotton candy sugar plum candy. Topping lollipop wafer cotton candy fruitcake toffee.\r\n    Macaroon candy canes lemon drops sugar plum topping pudding. Lemon drops chocolate cupcake cheesecake. Jelly beans soufflé sugar plum donut cheesecake I love ice cream caramels. Muffin gummies toffee candy canes. Jelly beans I love fruitcake dragée chocolate. Chocolate bar candy canes danish soufflé. I love cotton candy liquorice jelly.\r\n    Liquorice applicake tiramisu I love tiramisu applicake pie brownie applicake. Toffee danish tiramisu pie. Dessert jelly pudding marzipan jelly. Tootsie roll donut marshmallow jujubes marshmallow lollipop cookie brownie gummies. Brownie candy canes brownie. Fruitcake dessert toffee apple pie chocolate cake powder chocolate. Tart muffin jelly ice cream liquorice marzipan. Icing brownie liquorice I love ice cream.\r\n    Toffee danish icing cheesecake I love. Cake croissant sweet topping jelly-o marzipan topping jelly-o sweet. Dragée I love cupcake I love sugar plum brownie apple pie. I love lollipop gummi bears soufflé gummi bears apple pie dragée tootsie roll candy canes. Lemon drops applicake fruitcake candy canes liquorice. Ice cream cookie brownie jujubes icing. Candy canes I love bonbon danish. Jelly jelly beans chocolate bar pastry biscuit ice cream chocolate cake jelly beans. Candy chupa chups jujubes ice cream. Tootsie roll tart caramels cupcake.\r\n    Marzipan applicake ice cream brownie tart donut cake. Sweet roll soufflé tiramisu pastry gummi bears candy sweet roll topping apple pie. Dessert lemon drops fruitcake icing icing I love. Dragée fruitcake I love I love pie. Halvah dragée sweet cotton candy pudding apple pie chupa chups. Bear claw cotton candy I love muffin muffin unerdwear.com soufflé croissant. Cookie cookie danish tart sweet cheesecake.\r\n    ").split("\n");
 webshop_Webshop.main();
 })(typeof console != "undefined" ? console : {log:function(){}});
