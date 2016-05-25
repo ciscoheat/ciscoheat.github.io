@@ -53,7 +53,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td align="left"><a href="https://github.com/ciscoheat/immutable">immutable</a></td>
+                    <td align="left"><a href="https://github.com/ciscoheat/immutable-hx">immutable</a></td>
                     <td align="center">All</td>
                     <td align="left">Enforce your objects to be immutable, both class fields and local vars. Local vars vill behave similar to <code>const</code> and <code>let</code> in ES6. This helps you to think of data in a more functional and also event-like manner, when it becomes something that cannot change.</td>
                 </tr>
@@ -115,7 +115,7 @@
         <h3>
         <a id="designing-the-system" class="anchor" href="#designing-the-system" aria-hidden="true"><span class="octicon octicon-link"></span></a>Designing the system</h3>
         <ol>
-            <li>Create the data objects with <a href="https://github.com/ciscoheat/dataclass">dataclass</a> and validate their integrity with <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> when needed. Remember to make them <a href="https://github.com/ciscoheat/immutable">immutable</a> when possible.</li>
+            <li>Create the data objects with <a href="https://github.com/ciscoheat/dataclass">dataclass</a> and validate their integrity with <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> when needed. Remember to make them <a href="https://github.com/ciscoheat/immutable-hx">immutable</a> when possible.</li>
             <li>Use <a href="https://github.com/ciscoheat/buddy">buddy</a> to draw up the guidelines for the system behavior using pending tests</li>
             <li>Let the data objects interact in Contexts with the help of <a href="https://github.com/ciscoheat/haxedci">haxedci</a>, fleshing out the pending buddy tests with testing of the Contexts. <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> will be of use too in the Contexts.</li>
         </ol>
