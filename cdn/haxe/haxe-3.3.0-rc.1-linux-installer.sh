@@ -2,7 +2,7 @@
 
 
 HAXE_VERSION=3.3.0-rc.1
-NEKO_VERSION=2.0.0
+NEKO_VERSION=2.1.0
 
 
 if [ `uname -m` = "armv7l" ]; then
@@ -68,6 +68,8 @@ if [ $RESP = "y" ]; then
 		echo "    Downloading Neko $NEKO_VERSION (64-bit)"
 		echo "---------------------------------------"	
 		
+		oldpath=`pwd`
+		cd /tmp
 		wget -c http://nekovm.org/_media/neko-$NEKO_VERSION-linux64.tar.gz
 		
 		
@@ -82,7 +84,7 @@ if [ $RESP = "y" ]; then
 		sudo mkdir -p /usr/lib/neko
 		sudo rm -rf /usr/lib/neko/neko
 		sudo rm -rf /usr/lib/neko/nekotools
-		sudo cp -r neko-$NEKO_VERSION-linux/* /usr/lib/neko
+		sudo cp -r neko-$NEKO_VERSION-linux64/* /usr/lib/neko
 		
 		# Add symlinks
 		
@@ -107,8 +109,9 @@ if [ $RESP = "y" ]; then
 		
 		# Cleanup
 		
-		rm -rf neko-$NEKO_VERSION-linux
+		rm -rf neko-$NEKO_VERSION-linux64
 		rm neko-$NEKO_VERSION-linux64.tar.gz
+		cd $oldpath
 		
 		
 	elif [ `uname -m` = "armv7l" ]; then
@@ -119,6 +122,8 @@ if [ $RESP = "y" ]; then
 		echo "    Downloading Neko $NEKO_VERSION (armv7)"
 		echo "---------------------------------------"	
 		
+		oldpath=`pwd`
+		cd /tmp
 		wget -c http://www.openfl.org/builds/neko/neko-2.0.0-rpi.zip
 		
 		
@@ -151,6 +156,7 @@ if [ $RESP = "y" ]; then
 		# Cleanup
 		
 		rm neko-$NEKO_VERSION-rpi.zip
+		cd $oldpath
 		
 		
 	else
@@ -161,6 +167,8 @@ if [ $RESP = "y" ]; then
 		echo "    Downloading Neko $NEKO_VERSION (32-bit)"
 		echo "---------------------------------------"	
 		
+		oldpath=`pwd`
+		cd /tmp
 		wget -c http://nekovm.org/_media/neko-$NEKO_VERSION-linux.tar.gz
 		
 		
@@ -195,6 +203,7 @@ if [ $RESP = "y" ]; then
 		
 		rm -rf neko-$NEKO_VERSION-linux
 		rm neko-$NEKO_VERSION-linux.tar.gz
+		cd $oldpath
 		
 		
 	fi
