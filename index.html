@@ -42,26 +42,19 @@
                     <td align="left">Contracts is a way out of the wasteful unit testing that the current programming paradigm force most programmers into. Using Contracts you will move tests into program code, and greatly improve the integrity of your objects.</td>
                 </tr>
                 <tr>
+                    <td align="left"><a href="https://github.com/ciscoheat/dataclass">dataclass</a></td>
+                    <td align="center">All</td>
+                    <td align="left">Data is the very foundation of a system, representing what the system <em>is</em>, compared to functionality that represents what the system <em>does</em>. DataClass helps you define your domain objects, DTO's, etc, using a minimal Haxe syntax.</td>
+                </tr>                
+                <tr>
                     <td align="left"><a href="https://github.com/ciscoheat/buddy">buddy</a></td>
                     <td align="center">All</td>
                     <td align="left">The interesting things in a system usually happens between objects, and this is where most code-based testing should be. Buddy is a <a href="https://en.wikipedia.org/wiki/Behavior-driven_development">BDD</a> library for helping you move the testing mentality upwards, from method-level to interactions between objects.</td>
                 </tr>
                 <tr>
-                    <td align="left"><a href="https://github.com/ciscoheat/dataclass">dataclass</a></td>
-                    <td align="center">All</td>
-                    <td align="left">Data is the very foundation of a system, representing what the system <em>is</em> (compared to functionality that represents what the system <em>does</em>). DataClass helps you define the foundation of your system, simple data objects, using a minimal Haxe syntax. Here's a crude <a href="https://ciscoheat.github.io/dataclassgen.html">DataClass generator</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td align="left"><a href="https://github.com/ciscoheat/immutable-hx">immutable</a></td>
-                    <td align="center">All</td>
-                    <td align="left">Enforce your objects to be immutable, both class fields and local vars. Local vars vill behave similar to <code>const</code> and <code>let</code> in ES6. This helps you to think of data in a more functional and also event-like manner, when it becomes something that cannot change.</td>
-                </tr>
-                <tr>
                     <td align="left"><a href="https://github.com/ciscoheat/mithril-hx">mithril-hx</a></td>
                     <td align="center">Browser, Node.js</td>
-                    <td align="left">
-                        <a href="mithril.js.org">Mithril</a> is a small, yet great javascript MVC framework that is faster and more flexible than most others. Here are Haxe externs for this library, which lets you solve complex problems with simple tools.</td>
+                    <td align="left"><a href="mithril.js.org">Mithril</a> is a small, yet great javascript MVC framework that is faster and more flexible than most others. Here are Haxe externs for this library, which lets you solve complex problems with simple tools.</td>
                 </tr>
                 <tr>
                     <td align="left"><a href="https://github.com/ciscoheat/slambda">slambda</a></td>
@@ -99,7 +92,7 @@
                 <tr>
                     <td align="left"><a href="https://github.com/ciscoheat/viagrant">viagrant</a></td>
                     <td align="center">All and more</td>
-                    <td align="left">If you're using <a href="https://www.vagrantup.com/">Vagrant</a>, this will get a box with all your Haxe needs up and running in a few minutes. It also supports LAMP, a very convenient CMS, <a href="http://www.concrete5.org/">concrete5</a>, and some other goodies.</td>
+                    <td align="left">If you're using <a href="https://www.vagrantup.com/">Vagrant</a>, this will get a box with all your Haxe needs up and running in a few minutes. It supports LAMP and some other goodies.</td>
                 </tr>
             </tbody>
         </table>
@@ -115,7 +108,7 @@
         <h3>
         <a id="designing-the-system" class="anchor" href="#designing-the-system" aria-hidden="true"><span class="octicon octicon-link"></span></a>Designing the system</h3>
         <ol>
-            <li>Create the data objects with <a href="https://github.com/ciscoheat/dataclass">dataclass</a> and validate their integrity with <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> when needed. Remember to make them <a href="https://github.com/ciscoheat/immutable-hx">immutable</a> when possible.</li>
+            <li>Create the data objects with <a href="https://github.com/ciscoheat/dataclass">dataclass</a> and validate their integrity with <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> when needed.</li>
             <li>Use <a href="https://github.com/ciscoheat/buddy">buddy</a> to draw up the guidelines for the system behavior using pending tests</li>
             <li>Let the data objects interact in Contexts with the help of <a href="https://github.com/ciscoheat/haxedci">haxedci</a>, fleshing out the pending buddy tests with testing of the Contexts. <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> will be of use too in the Contexts.</li>
         </ol>
