@@ -1570,7 +1570,7 @@ views_MainView.prototype = {
 					var item2 = item;
 					return m.m(".book.cover",item2.title);
 				case Card:
-					return m.m("img#card[src=/images/card.svg]");
+					return m.m("img#card[src=images/card.svg]");
 				default:
 					var unknown1 = _g;
 					var tmp1 = "View not found for: " + Type.getClassName(unknown1);
