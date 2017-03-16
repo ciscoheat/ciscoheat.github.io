@@ -8,41 +8,54 @@ function $extend(from, fields) {
 }
 var dci_Context = function() { };
 dci_Context.__name__ = ["dci","Context"];
-var BorrowLibraryItems = function(scanner,cardReader,screen,printer,keypad) {
+var BorrowLibraryItems = function(scanner,cardReader,screen,printer,keypad,finishButtons) {
 	this.scanner = scanner;
 	this.cardReader = cardReader;
 	this.screen = screen;
 	this.printer = printer;
-	this.library = Data;
 	this.keypad = keypad;
+	this.finishButtons = finishButtons;
+	this.library = Data;
 	this.scannedItems = [];
 };
 BorrowLibraryItems.__name__ = ["BorrowLibraryItems"];
 BorrowLibraryItems.__interfaces__ = [dci_Context];
 BorrowLibraryItems.prototype = {
 	start: function() {
-		this.screen__displayWelcome();
 		this.resetState();
+		this.screen__displayWelcome();
 		this.cardReader__waitForCardChange();
 	}
 	,restart: function() {
-		this.screen__displayThankYouMessage();
 		this.resetState();
+		this.screen__displayThankYouMessage();
 		this.cardReader__waitForCardChange();
 	}
 	,resetState: function() {
-		this.pinAttemptsLeft = BorrowLibraryItems.maxPinAttempts;
+		if(this.removeCardLoop != null) {
+			this.removeCardLoop.stop();
+		}
 		this.scannedItems__clearItems();
+		this.pinAttemptsLeft = BorrowLibraryItems.maxPinAttempts;
 		this.authorizedCard = null;
+		this.lastScannedRfid = haxe_ds_Option.None;
 	}
 	,cardReader__waitForCardChange: function() {
 		this.cardReader.scanRfid($bind(this,this.cardReader__rfidScanned));
 	}
 	,cardReader__rfidScanned: function(data) {
+		var _gthis = this;
 		switch(data[1]) {
 		case 0:
 			var rfid = data[2];
-			this.cardReader__createCardRemovedWaitLoop();
+			this.removeCardLoop = new haxe_Timer(50);
+			this.removeCardLoop.run = function() {
+				_gthis.cardReader.scanRfid(function(data1) {
+					if(Type.enumEq(data1,haxe_ds_Option.None)) {
+						_gthis.restart();
+					}
+				});
+			};
 			var card = this.library__card(rfid);
 			if(card != null) {
 				this.keypad__waitForEnterPin();
@@ -54,18 +67,6 @@ BorrowLibraryItems.prototype = {
 			this.cardReader__waitForCardChange();
 			break;
 		}
-	}
-	,cardReader__createCardRemovedWaitLoop: function() {
-		var _gthis = this;
-		var removeCardTimer = new haxe_Timer(50);
-		removeCardTimer.run = function() {
-			_gthis.cardReader.scanRfid(function(data) {
-				if(Type.enumEq(data,haxe_ds_Option.None)) {
-					removeCardTimer.stop();
-					_gthis.restart();
-				}
-			});
-		};
 	}
 	,cardReader__validatePin: function(pin) {
 		var _gthis = this;
@@ -98,9 +99,11 @@ BorrowLibraryItems.prototype = {
 		if(this.authorizedCard == null) {
 			return;
 		}
-		if(Type.enumEq(rfid,this.scanner.lastScannedRfid())) {
+		if(Type.enumEq(rfid,this.lastScannedRfid)) {
 			this.scanner__waitForItem();
 			return;
+		} else {
+			this.lastScannedRfid = rfid;
 		}
 		switch(rfid[1]) {
 		case 0:
@@ -117,7 +120,8 @@ BorrowLibraryItems.prototype = {
 			var _g = new BorrowLoanItem(item,this.authorizedCard).borrow();
 			switch(_g[1]) {
 			case 0:
-				this.scannedItems__addItem(item);
+				var loan = _g[2];
+				this.scannedItems__addItem({ item : item, returnDate : loan.returnDate});
 				this.screen__displayScannedItems();
 				this.scanner__waitForItem();
 				break;
@@ -146,8 +150,8 @@ BorrowLibraryItems.prototype = {
 		this.scannedItems.splice(0,this.scannedItems.length);
 	}
 	,scannedItems__alreadyScanned: function(rfid) {
-		return Lambda.exists(this.scannedItems,function(loanItem) {
-			return loanItem.rfid == rfid;
+		return Lambda.exists(this.scannedItems,function(scannedItem) {
+			return scannedItem.item.rfid == rfid;
 		});
 	}
 	,screen__displayWelcome: function() {
@@ -160,6 +164,7 @@ BorrowLibraryItems.prototype = {
 		this.screen.display(views_ScreenState.EnterPin({ previousAttemptFailed : this.pinAttemptsLeft < 3}));
 	}
 	,screen__displayScannedItems: function() {
+		this.finishButtons__waitForFinishClick();
 		this.screen.display(views_ScreenState.DisplayBorrowedItems(this.scannedItems));
 	}
 	,screen__displayTooManyInvalidPin: function() {
@@ -174,9 +179,37 @@ BorrowLibraryItems.prototype = {
 	,screen__displayAlreadyBorrowedMessage: function() {
 		this.screen.displayMessage(views_ScreenState.ItemAlreadyBorrowed,3000);
 	}
+	,screen__displayDontForgetLibraryCard: function() {
+		this.screen.display(views_ScreenState.DontForgetLibraryCard);
+	}
+	,finishButtons__waitForFinishClick: function() {
+		this.finishButtons.onFinishWithoutReceiptClicked($bind(this,this.screen__displayDontForgetLibraryCard),{ fileName : "BorrowLibraryItems.hx", lineNumber : 212, className : "BorrowLibraryItems", methodName : "finishButtons__waitForFinishClick"});
+		this.finishButtons.onFinishWithReceiptClicked($bind(this,this.printer__printReceipt),{ fileName : "BorrowLibraryItems.hx", lineNumber : 213, className : "BorrowLibraryItems", methodName : "finishButtons__waitForFinishClick"});
+	}
 	,keypad__waitForEnterPin: function() {
 		this.screen__displayEnterPin();
-		this.keypad.onPinCodeEntered($bind(this,this.cardReader__validatePin));
+		this.keypad.onPinCodeEntered($bind(this,this.cardReader__validatePin),{ fileName : "BorrowLibraryItems.hx", lineNumber : 222, className : "BorrowLibraryItems", methodName : "keypad__waitForEnterPin"});
+	}
+	,printer__printReceipt: function() {
+		var _gthis = this;
+		var buffer = [DateTools.format(new Date(),"%Y-%m-%d"),""];
+		var scanned = $iterator(this.scannedItems)();
+		while(scanned.hasNext()) {
+			var scanned1 = scanned.next();
+			buffer.push(scanned1.item.title);
+			var tmp = "Return on " + DateTools.format(scanned1.returnDate,"%Y-%m-%d");
+			buffer.push(tmp);
+			buffer.push("");
+		}
+		var timer = new haxe_Timer(100);
+		timer.run = function() {
+			_gthis.printer.print(buffer.pop());
+			if(buffer.length == 0) {
+				timer.stop();
+				_gthis.printer.cutPaper();
+				_gthis.screen__displayDontForgetLibraryCard();
+			}
+		};
 	}
 	,library__item: function(rfid) {
 		return Lambda.find(this.library.libraryItems,function(loanItem) {
@@ -191,8 +224,7 @@ BorrowLibraryItems.prototype = {
 	,__class__: BorrowLibraryItems
 };
 var BorrowLoanItemStatus = { __ename__ : true, __constructs__ : ["Ok","ItemAlreadyBorrowed","InvalidBorrower","InvalidLoanItem"] };
-BorrowLoanItemStatus.Ok = ["Ok",0];
-BorrowLoanItemStatus.Ok.__enum__ = BorrowLoanItemStatus;
+BorrowLoanItemStatus.Ok = function(loan) { var $x = ["Ok",0,loan]; $x.__enum__ = BorrowLoanItemStatus; return $x; };
 BorrowLoanItemStatus.ItemAlreadyBorrowed = ["ItemAlreadyBorrowed",1];
 BorrowLoanItemStatus.ItemAlreadyBorrowed.__enum__ = BorrowLoanItemStatus;
 BorrowLoanItemStatus.InvalidBorrower = ["InvalidBorrower",2];
@@ -219,7 +251,7 @@ BorrowLoanItem.prototype = {
 		} else {
 			var loan = new LibraryLoan({ borrowerRfid : this.borrower__id(), loanItemRfid : this.loanItem__id(), created : new Date(), returnDate : this.loanItem__returnDateFromToday()});
 			this.listOfLoans__addLoan(loan);
-			return BorrowLoanItemStatus.Ok;
+			return BorrowLoanItemStatus.Ok(loan);
 		}
 	}
 	,listOfLoans__hasBorrowedLoanItem: function() {
@@ -854,8 +886,8 @@ Main.prototype = {
 			}
 		});
 		var screen = new views_ScreenView(views_ScreenState.Welcome);
-		var printer = { };
-		new views_MainView(bookshelf,cardReaderContents,workspace,itemScannerContents,screen).mount();
+		var printer = new ReceiptPrinter();
+		new views_MainView(bookshelf,cardReaderContents,workspace,itemScannerContents,screen,printer).mount();
 		var _g = new haxe_ds_StringMap();
 		var key = "bookshelf";
 		if(__map_reserved[key] != null) {
@@ -883,11 +915,71 @@ Main.prototype = {
 		}
 		var surfaces = _g;
 		new DragDrop(surfaces).start();
-		new BorrowLibraryItems(itemScanner,cardReader,screen,printer,screen).start();
+		new BorrowLibraryItems(itemScanner,cardReader,screen,printer,screen,screen).start();
 	}
 	,__class__: Main
 };
 Math.__name__ = ["Math"];
+var mithril_Mithril = function() { };
+mithril_Mithril.__name__ = ["mithril","Mithril"];
+var ReceiptPrinter = function() {
+	this._buffer = [];
+	this.paperIsCut = false;
+};
+ReceiptPrinter.__name__ = ["ReceiptPrinter"];
+ReceiptPrinter.__interfaces__ = [mithril_Mithril,haxecontracts_HaxeContracts];
+ReceiptPrinter.prototype = {
+	get_receipt: function() {
+		return this._buffer;
+	}
+	,print: function(line) {
+		if(this.paperIsCut) {
+			this._buffer = [];
+			this.paperIsCut = false;
+		}
+		this._buffer.unshift(line);
+		m.redraw();
+		try {
+			if(this._buffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[line],null,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "print"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[line],e,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "print"}));
+		}
+	}
+	,cutPaper: function() {
+		this.paperIsCut = true;
+		try {
+			if(this._buffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[],null,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "cutPaper"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[],e,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "cutPaper"}));
+		}
+	}
+	,view: function() {
+		if(arguments.length > 0 && arguments[0].tag != this) return arguments[0].tag.view.apply(arguments[0].tag, arguments);
+		try {
+			if(this._buffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[],null,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "view"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[],e,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "view"}));
+		}
+		var _g7 = [];
+		var s = $iterator(this.get_receipt())();
+		while(s.hasNext()) {
+			var s1 = s.next();
+			_g7.push(m.m("p",s1 == "" ? m.trust("&nbsp;") : s1));
+		}
+		var __contract_output = m.m(".box",m.m(".slot",m.m(".paper",_g7)));
+		return __contract_output;
+	}
+	,__class__: ReceiptPrinter
+};
 var Reflect = function() { };
 Reflect.__name__ = ["Reflect"];
 Reflect.field = function(o,field) {
@@ -965,6 +1057,74 @@ RfidScanner.prototype = {
 		return __contract_output;
 	}
 	,__class__: RfidScanner
+};
+var SingleEventHandler = function() {
+};
+SingleEventHandler.__name__ = ["SingleEventHandler"];
+SingleEventHandler.__interfaces__ = [haxecontracts_HaxeContracts];
+SingleEventHandler.prototype = {
+	get_trigger: function() {
+		try {
+			if(this._trigger == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException(this.removePos != null ? "Event removed before triggered, at " + this.posStr(this.removePos) : this.setPos != null ? "Event already triggered. Set at " + this.posStr(this.setPos) : "Event not set.",this,[],null,{ fileName : "SingleEventHandler.hx", lineNumber : 25, className : "SingleEventHandler", methodName : "get_trigger"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException(this.removePos != null ? "Event removed before triggered, at " + this.posStr(this.removePos) : this.setPos != null ? "Event already triggered. Set at " + this.posStr(this.setPos) : "Event not set.",this,[],e,{ fileName : "SingleEventHandler.hx", lineNumber : 25, className : "SingleEventHandler", methodName : "get_trigger"}));
+		}
+		var t = this._trigger;
+		this._trigger = null;
+		return t;
+	}
+	,set: function(event,pos) {
+		try {
+			if(event == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [event != null]",this,[event,pos],null,{ fileName : "SingleEventHandler.hx", lineNumber : 36, className : "SingleEventHandler", methodName : "set"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [event != null]",this,[event,pos],e,{ fileName : "SingleEventHandler.hx", lineNumber : 36, className : "SingleEventHandler", methodName : "set"}));
+		}
+		try {
+			if(!(this._trigger == null || this._trigger == event)) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Event already set at " + this.posStr(this.setPos) + " (Attempted to set at " + this.posStr(pos) + ")",this,[event,pos],null,{ fileName : "SingleEventHandler.hx", lineNumber : 38, className : "SingleEventHandler", methodName : "set"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Event already set at " + this.posStr(this.setPos) + " (Attempted to set at " + this.posStr(pos) + ")",this,[event,pos],e1,{ fileName : "SingleEventHandler.hx", lineNumber : 38, className : "SingleEventHandler", methodName : "set"}));
+		}
+		this._trigger = event;
+		this.setPos = pos;
+		this.removePos = null;
+	}
+	,remove: function(event,pos) {
+		try {
+			if(event == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [event != null]",this,[event,pos],null,{ fileName : "SingleEventHandler.hx", lineNumber : 47, className : "SingleEventHandler", methodName : "remove"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [event != null]",this,[event,pos],e,{ fileName : "SingleEventHandler.hx", lineNumber : 47, className : "SingleEventHandler", methodName : "remove"}));
+		}
+		try {
+			if(this._trigger != event) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException(this.setPos == null ? "Event not set before removal. Removed at " + this.posStr(pos) : "Event not same as the one registered at " + this.posStr(this.setPos) + " (Attempted to remove at " + this.posStr(pos) + ")",this,[event,pos],null,{ fileName : "SingleEventHandler.hx", lineNumber : 49, className : "SingleEventHandler", methodName : "remove"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException(this.setPos == null ? "Event not set before removal. Removed at " + this.posStr(pos) : "Event not same as the one registered at " + this.posStr(this.setPos) + " (Attempted to remove at " + this.posStr(pos) + ")",this,[event,pos],e1,{ fileName : "SingleEventHandler.hx", lineNumber : 49, className : "SingleEventHandler", methodName : "remove"}));
+		}
+		this._trigger = null;
+		this.setPos = null;
+		this.removePos = pos;
+	}
+	,hasEvent: function() {
+		return this._trigger != null;
+	}
+	,posStr: function(p) {
+		return p.fileName + ":" + p.lineNumber;
+	}
+	,__class__: SingleEventHandler
 };
 var Slambda = function() { };
 Slambda.__name__ = ["Slambda"];
@@ -1512,14 +1672,13 @@ js_Boot.__isNativeObj = function(o) {
 js_Boot.__resolveNativeClass = function(name) {
 	return $global[name];
 };
-var mithril_Mithril = function() { };
-mithril_Mithril.__name__ = ["mithril","Mithril"];
-var views_MainView = function(bookshelf,cardReader,workspace,itemScanner,screenView) {
+var views_MainView = function(bookshelf,cardReader,workspace,itemScanner,screenView,printer) {
 	this.bookshelf = bookshelf;
 	this.workspace = workspace;
 	this.cardReader = cardReader;
 	this.itemScanner = itemScanner;
 	this.screenView = screenView;
+	this.printer = printer;
 };
 views_MainView.__name__ = ["views","MainView"];
 views_MainView.__interfaces__ = [mithril_Mithril];
@@ -1550,9 +1709,7 @@ views_MainView.prototype = {
 			return f3(a13);
 		};
 		m.mount(_$HtmlElements_HtmlElements_$Impl_$.toElement("workspace"),{ view : tmp3});
-		m.mount(_$HtmlElements_HtmlElements_$Impl_$.toElement("printer"),{ view : function() {
-			return m.m(".box",m.m(".slot"));
-		}});
+		m.mount(_$HtmlElements_HtmlElements_$Impl_$.toElement("printer"),this.printer);
 	}
 	,surfaceView: function(surface) {
 		return surface.map(function(item) {
@@ -1581,11 +1738,11 @@ views_MainView.prototype = {
 	}
 	,__class__: views_MainView
 };
-var views_ScreenState = { __ename__ : true, __constructs__ : ["Welcome","EnterPin","DisplayBorrowedItems","ThankYou","TooManyInvalidPin","RemoveCard","InvalidCard","InvalidLoanItem","ItemAlreadyBorrowed"] };
+var views_ScreenState = { __ename__ : true, __constructs__ : ["Welcome","EnterPin","DisplayBorrowedItems","ThankYou","TooManyInvalidPin","RemoveCard","InvalidCard","InvalidLoanItem","ItemAlreadyBorrowed","DontForgetLibraryCard"] };
 views_ScreenState.Welcome = ["Welcome",0];
 views_ScreenState.Welcome.__enum__ = views_ScreenState;
 views_ScreenState.EnterPin = function(data) { var $x = ["EnterPin",1,data]; $x.__enum__ = views_ScreenState; return $x; };
-views_ScreenState.DisplayBorrowedItems = function(items) { var $x = ["DisplayBorrowedItems",2,items]; $x.__enum__ = views_ScreenState; return $x; };
+views_ScreenState.DisplayBorrowedItems = function(scannedItems) { var $x = ["DisplayBorrowedItems",2,scannedItems]; $x.__enum__ = views_ScreenState; return $x; };
 views_ScreenState.ThankYou = ["ThankYou",3];
 views_ScreenState.ThankYou.__enum__ = views_ScreenState;
 views_ScreenState.TooManyInvalidPin = ["TooManyInvalidPin",4];
@@ -1598,7 +1755,12 @@ views_ScreenState.InvalidLoanItem = ["InvalidLoanItem",7];
 views_ScreenState.InvalidLoanItem.__enum__ = views_ScreenState;
 views_ScreenState.ItemAlreadyBorrowed = ["ItemAlreadyBorrowed",8];
 views_ScreenState.ItemAlreadyBorrowed.__enum__ = views_ScreenState;
+views_ScreenState.DontForgetLibraryCard = ["DontForgetLibraryCard",9];
+views_ScreenState.DontForgetLibraryCard.__enum__ = views_ScreenState;
 var views_ScreenView = function(initialState) {
+	this._onFinishWithReceiptClicked = new SingleEventHandler();
+	this._onFinishWithoutReceiptClicked = new SingleEventHandler();
+	this._onPinCodeEntered = new SingleEventHandler();
 	this.pinBuffer = "";
 	this.display(initialState);
 };
@@ -1608,11 +1770,11 @@ views_ScreenView.prototype = {
 	display: function(state) {
 		try {
 			if(state == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [state != null]",this,[state],null,{ fileName : "ScreenView.hx", lineNumber : 30, className : "views.ScreenView", methodName : "display"}));
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [state != null]",this,[state],null,{ fileName : "ScreenView.hx", lineNumber : 34, className : "views.ScreenView", methodName : "display"}));
 			}
 		} catch( e ) {
 			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [state != null]",this,[state],e,{ fileName : "ScreenView.hx", lineNumber : 30, className : "views.ScreenView", methodName : "display"}));
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [state != null]",this,[state],e,{ fileName : "ScreenView.hx", lineNumber : 34, className : "views.ScreenView", methodName : "display"}));
 		}
 		if(this.messageTimer != null) {
 			this.messageTimer.stop();
@@ -1633,8 +1795,14 @@ views_ScreenView.prototype = {
 		};
 		this.messageTimer.run = tmp;
 	}
-	,onPinCodeEntered: function(callback) {
-		this._onPinCodeEntered = callback;
+	,onPinCodeEntered: function(callback,pos) {
+		this._onPinCodeEntered.set(callback,pos);
+	}
+	,onFinishWithoutReceiptClicked: function(callback,pos) {
+		this._onFinishWithoutReceiptClicked.set(callback,pos);
+	}
+	,onFinishWithReceiptClicked: function(callback,pos) {
+		this._onFinishWithReceiptClicked.set(callback,pos);
 	}
 	,view: function() {
 		if(arguments.length > 0 && arguments[0].tag != this) return arguments[0].tag.view.apply(arguments[0].tag, arguments);
@@ -1646,8 +1814,8 @@ views_ScreenView.prototype = {
 			var data = _g[2];
 			return this.enterPin(data.previousAttemptFailed);
 		case 2:
-			var items = _g[2];
-			return this.displayBorrowedItems(items);
+			var scannedItems = _g[2];
+			return this.displayBorrowedItems(scannedItems);
 		case 3:
 			return this.thankYou();
 		case 4:
@@ -1658,6 +1826,8 @@ views_ScreenView.prototype = {
 			return this.invalidLoanItem();
 		case 8:
 			return this.itemAlreadyBorrowed();
+		case 9:
+			return this.dontForgetLibraryCard();
 		default:
 			return m.m(".content.red","View not found: " + Std.string(this.currentState));
 		}
@@ -1682,26 +1852,31 @@ views_ScreenView.prototype = {
 		}
 		var pin = this.pinBuffer;
 		this.pinBuffer = "";
-		if(this._onPinCodeEntered != null) {
-			var callback = this._onPinCodeEntered;
-			this._onPinCodeEntered = null;
-			callback(pin);
+		if(this._onPinCodeEntered.hasEvent()) {
+			(this._onPinCodeEntered.get_trigger())(pin);
 		}
 	}
 	,tooManyInvalidPin: function() {
 		return m.m(".content",[m.m(".red","Incorrect PIN too many times."),m.m("p","Please remove your card before trying again.")]);
 	}
-	,displayBorrowedItems: function(items) {
+	,displayBorrowedItems: function(scannedItems) {
+		var _gthis = this;
 		var tmp = m.m("p","Scan the items you want to borrow on the dark red area.");
-		var tmp1 = m.m("p",[m.m("button.-success",{ style : "margin-right:2px"},"Finish with receipt"),m.m("button.-success","Finish without receipt")]);
+		var tmp1 = m.m("p",[m.m("button.-success",{ style : "margin-right:2px", onclick : function() {
+			if(_gthis._onFinishWithReceiptClicked.hasEvent()) {
+				(_gthis._onFinishWithReceiptClicked.get_trigger())();
+			}
+		}},"Finish with receipt"),m.m("button.-success",{ onclick : function() {
+			if(_gthis._onFinishWithoutReceiptClicked.hasEvent()) {
+				(_gthis._onFinishWithoutReceiptClicked.get_trigger())();
+			}
+		}},"Finish without receipt")]);
 		var tmp2 = m.m("thead",m.m("tr",[m.m("th","Title"),m.m("th","Return date")]));
 		var _g7 = [];
-		var item = $iterator(items)();
-		while(item.hasNext()) {
-			var item1 = item.next();
-			var t = new Date().getTime() + item1.loanTimeDays * 24 * 60 * 60 * 1000;
-			var returnDate = new Date(t);
-			_g7.push(m.m("tr",[m.m("td",item1.title),m.m("td",DateTools.format(returnDate,"%Y-%m-%d"))]));
+		var scanned = $iterator(scannedItems)();
+		while(scanned.hasNext()) {
+			var scanned1 = scanned.next();
+			_g7.push(m.m("tr",[m.m("td",scanned1.item.title),m.m("td",DateTools.format(scanned1.returnDate,"%Y-%m-%d"))]));
 		}
 		return m.m(".content",[tmp,tmp1,m.m("table",[tmp2,m.m("tbody",_g7)])]);
 	}
@@ -1709,7 +1884,10 @@ views_ScreenView.prototype = {
 		return m.m(".content",[m.m(".red","Library card not valid."),m.m("p","Please contact support.")]);
 	}
 	,thankYou: function() {
-		return m.m(".content",m.m("p","Thank you for using the automatic borrowing service!"));
+		return m.m(".content",[m.m("p","Thank you for using the automatic borrowing service!")]);
+	}
+	,dontForgetLibraryCard: function() {
+		return m.m(".content",[m.m("p",m.m("strong","Don't forget your library card!"))]);
 	}
 	,invalidLoanItem: function() {
 		return m.m(".content",[m.m(".red","Loan item not valid."),m.m("p","Please contact support.")]);
@@ -1767,7 +1945,7 @@ var __varName1 = GLOBAL.m;
 			}
 		})(__varName1);
 } catch(_) {}
-BorrowLibraryItems.__meta__ = { fields : { cardReader : { role : null}, scanner : { role : null}, scannedItems : { role : null}, screen : { role : null}, keypad : { role : null}, printer : { role : null}, library : { role : null}}};
+BorrowLibraryItems.__meta__ = { fields : { cardReader : { role : null}, scanner : { role : null}, scannedItems : { role : null}, screen : { role : null}, finishButtons : { role : null}, keypad : { role : null}, printer : { role : null}, library : { role : null}}};
 BorrowLibraryItems.maxPinAttempts = 3;
 BorrowLoanItem.__meta__ = { fields : { listOfLoans : { role : null}, listOfLibraryCards : { role : null}, listOfItems : { role : null}, loanItem : { role : null}, borrower : { role : null}}};
 Book.__meta__ = { obj : { dataClassRtti : [{ rfid : "String", title : "String", loanTimeDays : "Int"}]}};
