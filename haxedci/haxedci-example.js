@@ -6,291 +6,6 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
-var dci_Context = function() { };
-dci_Context.__name__ = ["dci","Context"];
-var BorrowLibraryItems = function(scanner,cardReader,screen,printer,keypad,finishButtons) {
-	this.scanner = scanner;
-	this.cardReader = cardReader;
-	this.screen = screen;
-	this.printer = printer;
-	this.keypad = keypad;
-	this.finishButtons = finishButtons;
-	this.library = Data;
-	this.scannedItems = [];
-};
-BorrowLibraryItems.__name__ = ["BorrowLibraryItems"];
-BorrowLibraryItems.__interfaces__ = [dci_Context];
-BorrowLibraryItems.prototype = {
-	start: function() {
-		this.resetState();
-		this.screen__displayWelcome();
-		this.cardReader__waitForCardChange();
-	}
-	,restart: function() {
-		this.resetState();
-		this.screen__displayThankYouMessage();
-		this.cardReader__waitForCardChange();
-	}
-	,resetState: function() {
-		if(this.removeCardLoop != null) {
-			this.removeCardLoop.stop();
-		}
-		this.scannedItems__clearItems();
-		this.pinAttemptsLeft = BorrowLibraryItems.maxPinAttempts;
-		this.authorizedCard = null;
-		this.lastScannedRfid = haxe_ds_Option.None;
-	}
-	,cardReader__waitForCardChange: function() {
-		this.cardReader.scanRfid($bind(this,this.cardReader__rfidScanned));
-	}
-	,cardReader__rfidScanned: function(data) {
-		var _gthis = this;
-		switch(data[1]) {
-		case 0:
-			var rfid = data[2];
-			this.removeCardLoop = new haxe_Timer(50);
-			this.removeCardLoop.run = function() {
-				_gthis.cardReader.scanRfid(function(data1) {
-					if(Type.enumEq(data1,haxe_ds_Option.None)) {
-						_gthis.restart();
-					}
-				});
-			};
-			var card = this.library__card(rfid);
-			if(card != null) {
-				this.keypad__waitForEnterPin();
-			} else {
-				this.screen__displayInvalidCard();
-			}
-			break;
-		case 1:
-			this.cardReader__waitForCardChange();
-			break;
-		}
-	}
-	,cardReader__validatePin: function(pin) {
-		var _gthis = this;
-		this.cardReader.scanRfid(function(data) {
-			switch(data[1]) {
-			case 0:
-				var rfid = data[2];
-				var card = _gthis.library__card(rfid);
-				if(card == null) {
-					_gthis.screen__displayInvalidCard();
-				} else if(card.pin == pin) {
-					_gthis.authorizedCard = card;
-					_gthis.screen__displayScannedItems();
-					_gthis.scanner__waitForItem();
-				} else if(--_gthis.pinAttemptsLeft > 0) {
-					_gthis.keypad__waitForEnterPin();
-				} else {
-					_gthis.screen__displayTooManyInvalidPin();
-				}
-				break;
-			case 1:
-				break;
-			}
-		});
-	}
-	,scanner__waitForItem: function() {
-		this.scanner.scanRfid($bind(this,this.scanner__rfidScanned));
-	}
-	,scanner__rfidScanned: function(rfid) {
-		if(this.authorizedCard == null) {
-			return;
-		}
-		if(Type.enumEq(rfid,this.lastScannedRfid)) {
-			this.scanner__waitForItem();
-			return;
-		} else {
-			this.lastScannedRfid = rfid;
-		}
-		switch(rfid[1]) {
-		case 0:
-			var rfid1 = rfid[2];
-			if(this.scannedItems__alreadyScanned(rfid1)) {
-				this.scanner__waitForItem();
-				return;
-			}
-			var item = this.library__item(rfid1);
-			if(item == null) {
-				this.scanner__waitForItem();
-				return;
-			}
-			var _g = new BorrowLoanItem(item,this.authorizedCard).borrow();
-			switch(_g[1]) {
-			case 0:
-				var loan = _g[2];
-				this.scannedItems__addItem({ item : item, returnDate : loan.returnDate});
-				this.screen__displayScannedItems();
-				this.scanner__waitForItem();
-				break;
-			case 1:
-				this.screen__displayAlreadyBorrowedMessage();
-				this.scanner__waitForItem();
-				break;
-			case 2:
-				this.screen__displayInvalidCard();
-				break;
-			case 3:
-				this.screen__displayInvalidLoanItemMessage();
-				this.scanner__waitForItem();
-				break;
-			}
-			break;
-		case 1:
-			this.scanner__waitForItem();
-			break;
-		}
-	}
-	,scannedItems__addItem: function(item) {
-		this.scannedItems.push(item);
-	}
-	,scannedItems__clearItems: function() {
-		this.scannedItems.splice(0,this.scannedItems.length);
-	}
-	,scannedItems__alreadyScanned: function(rfid) {
-		return Lambda.exists(this.scannedItems,function(scannedItem) {
-			return scannedItem.item.rfid == rfid;
-		});
-	}
-	,screen__displayWelcome: function() {
-		this.screen.display(views_ScreenState.Welcome);
-	}
-	,screen__displayThankYouMessage: function() {
-		this.screen.displayMessage(views_ScreenState.ThankYou,4000,views_ScreenState.Welcome);
-	}
-	,screen__displayEnterPin: function() {
-		this.screen.display(views_ScreenState.EnterPin({ previousAttemptFailed : this.pinAttemptsLeft < 3}));
-	}
-	,screen__displayScannedItems: function() {
-		this.finishButtons__waitForFinishClick();
-		this.screen.display(views_ScreenState.DisplayBorrowedItems(this.scannedItems));
-	}
-	,screen__displayTooManyInvalidPin: function() {
-		this.screen.display(views_ScreenState.TooManyInvalidPin);
-	}
-	,screen__displayInvalidCard: function() {
-		this.screen.display(views_ScreenState.InvalidCard);
-	}
-	,screen__displayInvalidLoanItemMessage: function() {
-		this.screen.displayMessage(views_ScreenState.InvalidLoanItem,3000);
-	}
-	,screen__displayAlreadyBorrowedMessage: function() {
-		this.screen.displayMessage(views_ScreenState.ItemAlreadyBorrowed,3000);
-	}
-	,screen__displayDontForgetLibraryCard: function() {
-		this.screen.display(views_ScreenState.DontForgetLibraryCard);
-	}
-	,finishButtons__waitForFinishClick: function() {
-		this.finishButtons.onFinishWithoutReceiptClicked($bind(this,this.screen__displayDontForgetLibraryCard),{ fileName : "BorrowLibraryItems.hx", lineNumber : 212, className : "BorrowLibraryItems", methodName : "finishButtons__waitForFinishClick"});
-		this.finishButtons.onFinishWithReceiptClicked($bind(this,this.printer__printReceipt),{ fileName : "BorrowLibraryItems.hx", lineNumber : 213, className : "BorrowLibraryItems", methodName : "finishButtons__waitForFinishClick"});
-	}
-	,keypad__waitForEnterPin: function() {
-		this.screen__displayEnterPin();
-		this.keypad.onPinCodeEntered($bind(this,this.cardReader__validatePin),{ fileName : "BorrowLibraryItems.hx", lineNumber : 222, className : "BorrowLibraryItems", methodName : "keypad__waitForEnterPin"});
-	}
-	,printer__printReceipt: function() {
-		var _gthis = this;
-		var buffer = [DateTools.format(new Date(),"%Y-%m-%d"),""];
-		var scanned = $iterator(this.scannedItems)();
-		while(scanned.hasNext()) {
-			var scanned1 = scanned.next();
-			buffer.push(scanned1.item.title);
-			var tmp = "Return on " + DateTools.format(scanned1.returnDate,"%Y-%m-%d");
-			buffer.push(tmp);
-			buffer.push("");
-		}
-		var timer = new haxe_Timer(100);
-		timer.run = function() {
-			_gthis.printer.print(buffer.pop());
-			if(buffer.length == 0) {
-				timer.stop();
-				_gthis.printer.cutPaper();
-				_gthis.screen__displayDontForgetLibraryCard();
-			}
-		};
-	}
-	,library__item: function(rfid) {
-		return Lambda.find(this.library.libraryItems,function(loanItem) {
-			return loanItem.rfid == rfid;
-		});
-	}
-	,library__card: function(rfid) {
-		return Lambda.find(this.library.libraryCards,function(libraryCard) {
-			return libraryCard.rfid == rfid;
-		});
-	}
-	,__class__: BorrowLibraryItems
-};
-var BorrowLoanItemStatus = { __ename__ : true, __constructs__ : ["Ok","ItemAlreadyBorrowed","InvalidBorrower","InvalidLoanItem"] };
-BorrowLoanItemStatus.Ok = function(loan) { var $x = ["Ok",0,loan]; $x.__enum__ = BorrowLoanItemStatus; return $x; };
-BorrowLoanItemStatus.ItemAlreadyBorrowed = ["ItemAlreadyBorrowed",1];
-BorrowLoanItemStatus.ItemAlreadyBorrowed.__enum__ = BorrowLoanItemStatus;
-BorrowLoanItemStatus.InvalidBorrower = ["InvalidBorrower",2];
-BorrowLoanItemStatus.InvalidBorrower.__enum__ = BorrowLoanItemStatus;
-BorrowLoanItemStatus.InvalidLoanItem = ["InvalidLoanItem",3];
-BorrowLoanItemStatus.InvalidLoanItem.__enum__ = BorrowLoanItemStatus;
-var BorrowLoanItem = function(loanItem,borrower) {
-	this.listOfLibraryCards = Data.libraryCards;
-	this.listOfItems = Data.libraryItems;
-	this.listOfLoans = Data.libraryLoans;
-	this.loanItem = loanItem;
-	this.borrower = borrower;
-};
-BorrowLoanItem.__name__ = ["BorrowLoanItem"];
-BorrowLoanItem.__interfaces__ = [dci_Context];
-BorrowLoanItem.prototype = {
-	borrow: function() {
-		if(!this.listOfItems__hasLoanItem()) {
-			return BorrowLoanItemStatus.InvalidLoanItem;
-		} else if(!this.listOfLibraryCards__hasBorrowerID()) {
-			return BorrowLoanItemStatus.InvalidBorrower;
-		} else if(this.listOfLoans__hasBorrowedLoanItem()) {
-			return BorrowLoanItemStatus.ItemAlreadyBorrowed;
-		} else {
-			var loan = new LibraryLoan({ borrowerRfid : this.borrower__id(), loanItemRfid : this.loanItem__id(), created : new Date(), returnDate : this.loanItem__returnDateFromToday()});
-			this.listOfLoans__addLoan(loan);
-			return BorrowLoanItemStatus.Ok(loan);
-		}
-	}
-	,listOfLoans__hasBorrowedLoanItem: function() {
-		var _gthis = this;
-		return Lambda.exists(this.listOfLoans,function(loan) {
-			if(loan.loanItemRfid == _gthis.loanItem__id()) {
-				return loan.returnDate.getTime() > new Date().getTime();
-			} else {
-				return false;
-			}
-		});
-	}
-	,listOfLoans__addLoan: function(loan) {
-		this.listOfLoans.push(loan);
-	}
-	,listOfLibraryCards__hasBorrowerID: function() {
-		var _gthis = this;
-		return Lambda.exists(this.listOfLibraryCards,function(card) {
-			return card.rfid == _gthis.borrower__id();
-		});
-	}
-	,listOfItems__hasLoanItem: function() {
-		var _gthis = this;
-		return Lambda.exists(this.listOfItems,function(item) {
-			return item.rfid == _gthis.loanItem__id();
-		});
-	}
-	,loanItem__id: function() {
-		return this.loanItem.rfid;
-	}
-	,loanItem__returnDateFromToday: function() {
-		var t = new Date().getTime() + this.loanItem.loanTimeDays * 24 * 60 * 60 * 1000;
-		return new Date(t);
-	}
-	,borrower__id: function() {
-		return this.borrower.rfid;
-	}
-	,__class__: BorrowLoanItem
-};
 var Data = function() { };
 Data.__name__ = ["Data"];
 var RfidItem = function() { };
@@ -298,11 +13,11 @@ RfidItem.__name__ = ["RfidItem"];
 RfidItem.prototype = {
 	__class__: RfidItem
 };
-var DragDropItem = function() { };
-DragDropItem.__name__ = ["DragDropItem"];
+var contexts_DragDropItem = function() { };
+contexts_DragDropItem.__name__ = ["contexts","DragDropItem"];
 var LoanItem = function() { };
 LoanItem.__name__ = ["LoanItem"];
-LoanItem.__interfaces__ = [RfidItem,DragDropItem];
+LoanItem.__interfaces__ = [RfidItem,contexts_DragDropItem];
 LoanItem.prototype = {
 	__class__: LoanItem
 };
@@ -416,14 +131,14 @@ Bluray.prototype = {
 	}
 	,__class__: Bluray
 };
-var Card = function(data) {
+var LibraryCard = function(data) {
 	this.set_rfid(data.rfid);
 	this.set_name(data.name);
 	this.set_pin(data.pin);
 };
-Card.__name__ = ["Card"];
-Card.__interfaces__ = [RfidItem,DragDropItem,DataClass,haxecontracts_HaxeContracts];
-Card.validate = function(data) {
+LibraryCard.__name__ = ["LibraryCard"];
+LibraryCard.__interfaces__ = [RfidItem,contexts_DragDropItem,DataClass,haxecontracts_HaxeContracts];
+LibraryCard.validate = function(data) {
 	var output = [];
 	if(!Object.prototype.hasOwnProperty.call(data,"rfid")) {
 		output.push("rfid");
@@ -442,26 +157,26 @@ Card.validate = function(data) {
 	}
 	return output;
 };
-Card.prototype = {
+LibraryCard.prototype = {
 	set_rfid: function(v) {
 		if(v == null || v.length <= 0) {
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("DataClass validation failed for Card.rfid.",this,null,v,{ fileName : "Builder.hx", lineNumber : 245, className : "Card", methodName : "set_rfid"}));
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("DataClass validation failed for LibraryCard.rfid.",this,null,v,{ fileName : "Builder.hx", lineNumber : 245, className : "LibraryCard", methodName : "set_rfid"}));
 		}
 		return this.rfid = v;
 	}
 	,set_name: function(v) {
 		if(v == null || v.length <= 0) {
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("DataClass validation failed for Card.name.",this,null,v,{ fileName : "Builder.hx", lineNumber : 245, className : "Card", methodName : "set_name"}));
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("DataClass validation failed for LibraryCard.name.",this,null,v,{ fileName : "Builder.hx", lineNumber : 245, className : "LibraryCard", methodName : "set_name"}));
 		}
 		return this.name = v;
 	}
 	,set_pin: function(v) {
 		if(v == null || !new EReg("^\\d{4}$","").match(v)) {
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("DataClass validation failed for Card.pin.",this,null,v,{ fileName : "Builder.hx", lineNumber : 245, className : "Card", methodName : "set_pin"}));
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("DataClass validation failed for LibraryCard.pin.",this,null,v,{ fileName : "Builder.hx", lineNumber : 245, className : "LibraryCard", methodName : "set_pin"}));
 		}
 		return this.pin = v;
 	}
-	,__class__: Card
+	,__class__: LibraryCard
 };
 var LibraryLoan = function(data) {
 	this.set_loanItemRfid(data.loanItemRfid);
@@ -616,143 +331,6 @@ DateTools.__format = function(d,f) {
 DateTools.format = function(d,f) {
 	return DateTools.__format(d,f);
 };
-var DragDrop = function(surfaces) {
-	try {
-		if(surfaces == null) {
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [surfaces != null]",this,[surfaces],null,{ fileName : "DragDrop.hx", lineNumber : 38, className : "DragDrop", methodName : "new"}));
-		}
-	} catch( e ) {
-		if (e instanceof js__$Boot_HaxeError) e = e.val;
-		throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [surfaces != null]",this,[surfaces],e,{ fileName : "DragDrop.hx", lineNumber : 38, className : "DragDrop", methodName : "new"}));
-	}
-	this.surfaces = surfaces;
-};
-DragDrop.__name__ = ["DragDrop"];
-DragDrop.__interfaces__ = [haxecontracts_HaxeContracts];
-DragDrop.prototype = {
-	start: function() {
-		try {
-			if(Reflect.field(window,"dragula") == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [Reflect.field(Browser.window, \"dragula\") != null]",this,[],null,{ fileName : "DragDrop.hx", lineNumber : 43, className : "DragDrop", methodName : "start"}));
-			}
-		} catch( e ) {
-			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [Reflect.field(Browser.window, \"dragula\") != null]",this,[],e,{ fileName : "DragDrop.hx", lineNumber : 43, className : "DragDrop", methodName : "start"}));
-		}
-		var dragula = Reflect.field(window,"dragula");
-		var _g = [];
-		var id = this.surfaces.keys();
-		while(id.hasNext()) {
-			var id1 = id.next();
-			_g.push(HtmlTools.q("#" + id1));
-		}
-		this.drake = dragula(_g,{ accepts : $bind(this,this.acceptsDrop)}).on("drag",$bind(this,this.onDrag)).on("drop",$bind(this,this.onDrop));
-		console.log("Drag'n'drop interface enabled.");
-	}
-	,acceptsDrop: function(droppedItem,targetElement) {
-		try {
-			if(droppedItem == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [droppedItem != null]",this,[droppedItem,targetElement],null,{ fileName : "DragDrop.hx", lineNumber : 58, className : "DragDrop", methodName : "acceptsDrop"}));
-			}
-		} catch( e ) {
-			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [droppedItem != null]",this,[droppedItem,targetElement],e,{ fileName : "DragDrop.hx", lineNumber : 58, className : "DragDrop", methodName : "acceptsDrop"}));
-		}
-		try {
-			if(targetElement.id.length <= 0) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [targetElement.id.length > 0]",this,[droppedItem,targetElement],null,{ fileName : "DragDrop.hx", lineNumber : 59, className : "DragDrop", methodName : "acceptsDrop"}));
-			}
-		} catch( e1 ) {
-			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [targetElement.id.length > 0]",this,[droppedItem,targetElement],e1,{ fileName : "DragDrop.hx", lineNumber : 59, className : "DragDrop", methodName : "acceptsDrop"}));
-		}
-		var _g = targetElement.id;
-		switch(_g) {
-		case "card-reader":case "scanner":
-			if(this.surfaces.get(targetElement.id).length == 1) {
-				return false;
-			}
-			break;
-		default:
-		}
-		var _g1 = droppedItem.id;
-		if(_g1 == "card") {
-			return targetElement.id != "bookshelf";
-		} else {
-			return targetElement.id != "card-reader";
-		}
-	}
-	,onDrag: function(el,sourceEl) {
-		try {
-			if(el == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [el != null]",this,[el,sourceEl],null,{ fileName : "DragDrop.hx", lineNumber : 82, className : "DragDrop", methodName : "onDrag"}));
-			}
-		} catch( e ) {
-			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [el != null]",this,[el,sourceEl],e,{ fileName : "DragDrop.hx", lineNumber : 82, className : "DragDrop", methodName : "onDrag"}));
-		}
-		try {
-			var key = sourceEl.id;
-			var _this = this.surfaces;
-			if(!(__map_reserved[key] != null ? _this.existsReserved(key) : _this.h.hasOwnProperty(key))) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("No surface found: " + sourceEl.id,this,[el,sourceEl],null,{ fileName : "DragDrop.hx", lineNumber : 83, className : "DragDrop", methodName : "onDrag"}));
-			}
-		} catch( e1 ) {
-			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("No surface found: " + sourceEl.id,this,[el,sourceEl],e1,{ fileName : "DragDrop.hx", lineNumber : 83, className : "DragDrop", methodName : "onDrag"}));
-		}
-		var key1 = sourceEl.id;
-		var _this1 = this.surfaces;
-		var surface = __map_reserved[key1] != null ? _this1.getReserved(key1) : _this1.h[key1];
-		var pos = HtmlTools.elPos(sourceEl.children,el);
-		try {
-			if(pos < 0) {
-				throw new js__$Boot_HaxeError(false);
-			}
-		} catch( e2 ) {
-			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Item not found in surface " + sourceEl.id,this,null,typeof(e2) == "boolean" ? null : e2,{ fileName : "DragDrop.hx", lineNumber : 87, className : "DragDrop", methodName : "onDrag"}));
-		}
-		this.dragData = { source : surface, sourcePos : pos};
-	}
-	,onDrop: function(el,targetEl,_,sibling) {
-		try {
-			if(this.dragData == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [dragData != null]",this,[el,targetEl,_,sibling],null,{ fileName : "DragDrop.hx", lineNumber : 98, className : "DragDrop", methodName : "onDrop"}));
-			}
-		} catch( e ) {
-			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [dragData != null]",this,[el,targetEl,_,sibling],e,{ fileName : "DragDrop.hx", lineNumber : 98, className : "DragDrop", methodName : "onDrop"}));
-		}
-		try {
-			if(el == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [el != null]",this,[el,targetEl,_,sibling],null,{ fileName : "DragDrop.hx", lineNumber : 99, className : "DragDrop", methodName : "onDrop"}));
-			}
-		} catch( e1 ) {
-			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [el != null]",this,[el,targetEl,_,sibling],e1,{ fileName : "DragDrop.hx", lineNumber : 99, className : "DragDrop", methodName : "onDrop"}));
-		}
-		try {
-			var key = targetEl.id;
-			var _this = this.surfaces;
-			if(!(__map_reserved[key] != null ? _this.existsReserved(key) : _this.h.hasOwnProperty(key))) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("No surface found: " + targetEl.id,this,[el,targetEl,_,sibling],null,{ fileName : "DragDrop.hx", lineNumber : 100, className : "DragDrop", methodName : "onDrop"}));
-			}
-		} catch( e2 ) {
-			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("No surface found: " + targetEl.id,this,[el,targetEl,_,sibling],e2,{ fileName : "DragDrop.hx", lineNumber : 100, className : "DragDrop", methodName : "onDrop"}));
-		}
-		var key1 = targetEl.id;
-		var _this1 = this.surfaces;
-		var target = __map_reserved[key1] != null ? _this1.getReserved(key1) : _this1.h[key1];
-		var targetPos = sibling == null ? targetEl.children.length - 1 : HtmlTools.elPos(targetEl.children,sibling) - 1;
-		var removed = this.dragData.source.splice(this.dragData.sourcePos,1);
-		target.splice(targetPos,0,removed[0]);
-		this.drake.cancel(true);
-		m.redraw();
-	}
-	,__class__: DragDrop
-};
 var EReg = function(r,opt) {
 	this.r = new RegExp(r,opt.split("u").join(""));
 };
@@ -774,11 +352,6 @@ EReg.prototype = {
 		}
 	}
 	,__class__: EReg
-};
-var _$HtmlElements_HtmlElements_$Impl_$ = {};
-_$HtmlElements_HtmlElements_$Impl_$.__name__ = ["_HtmlElements","HtmlElements_Impl_"];
-_$HtmlElements_HtmlElements_$Impl_$.toElement = function(this1) {
-	return window.document.querySelector("#" + this1);
 };
 var HtmlTools = function() { };
 HtmlTools.__name__ = ["HtmlTools"];
@@ -858,19 +431,18 @@ Lambda.find = function(it,f) {
 var Main = function() {
 };
 Main.__name__ = ["Main"];
-Main.__interfaces__ = [haxecontracts_HaxeContracts];
 Main.main = function() {
 	new Main().start();
 };
 Main.prototype = {
 	start: function() {
 		Data.libraryItems = [new Book({ rfid : "ITEM787", title : "Anna Karenina", loanTimeDays : 21}),new Bluray({ rfid : "ITEM788", title : "War and Peace", loanTimeDays : 14, length : 168}),new Book({ rfid : "ITEM789", title : "Master and Man", loanTimeDays : 21})];
-		Data.libraryCards = [new Card({ rfid : "CARD54321", name : "Leo Tolstoy", pin : "1234"})];
+		Data.libraryCards = [new LibraryCard({ rfid : "CARD54321", name : "Leo Tolstoy", pin : "1234"})];
 		Data.libraryLoans = [];
 		var bookshelf = Lambda.array(Data.libraryItems);
 		var workspace = Lambda.array(Data.libraryCards);
 		var itemScannerContents = [];
-		var itemScanner = new RfidScanner(function() {
+		var itemScanner = new gadgets_RfidScanner(function() {
 			try {
 				return haxe_ds_Option.Some((js_Boot.__cast(itemScannerContents[0] , RfidItem)).rfid);
 			} catch( e ) {
@@ -878,15 +450,15 @@ Main.prototype = {
 			}
 		});
 		var cardReaderContents = [];
-		var cardReader = new RfidScanner(function() {
+		var cardReader = new gadgets_RfidScanner(function() {
 			try {
 				return haxe_ds_Option.Some((js_Boot.__cast(cardReaderContents[0] , RfidItem)).rfid);
 			} catch( e1 ) {
 				return haxe_ds_Option.None;
 			}
 		});
-		var screen = new views_ScreenView(views_ScreenState.Welcome);
-		var printer = new ReceiptPrinter();
+		var screen = new views_ScreenView();
+		var printer = new gadgets_ReceiptPrinter();
 		new views_MainView(bookshelf,cardReaderContents,workspace,itemScannerContents,screen,printer).mount();
 		var _g = new haxe_ds_StringMap();
 		var key = "bookshelf";
@@ -914,72 +486,12 @@ Main.prototype = {
 			_g.h[key3] = itemScannerContents;
 		}
 		var surfaces = _g;
-		new DragDrop(surfaces).start();
-		new BorrowLibraryItems(itemScanner,cardReader,screen,printer,screen,screen).start();
+		new contexts_DragDropMechanics(surfaces).start();
+		new contexts_LibraryBorrowMachine(itemScanner,cardReader,screen,printer,screen,screen).start();
 	}
 	,__class__: Main
 };
 Math.__name__ = ["Math"];
-var mithril_Mithril = function() { };
-mithril_Mithril.__name__ = ["mithril","Mithril"];
-var ReceiptPrinter = function() {
-	this._buffer = [];
-	this.paperIsCut = false;
-};
-ReceiptPrinter.__name__ = ["ReceiptPrinter"];
-ReceiptPrinter.__interfaces__ = [mithril_Mithril,haxecontracts_HaxeContracts];
-ReceiptPrinter.prototype = {
-	get_receipt: function() {
-		return this._buffer;
-	}
-	,print: function(line) {
-		if(this.paperIsCut) {
-			this._buffer = [];
-			this.paperIsCut = false;
-		}
-		this._buffer.unshift(line);
-		m.redraw();
-		try {
-			if(this._buffer == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[line],null,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "print"}));
-			}
-		} catch( e ) {
-			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[line],e,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "print"}));
-		}
-	}
-	,cutPaper: function() {
-		this.paperIsCut = true;
-		try {
-			if(this._buffer == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[],null,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "cutPaper"}));
-			}
-		} catch( e ) {
-			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[],e,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "cutPaper"}));
-		}
-	}
-	,view: function() {
-		if(arguments.length > 0 && arguments[0].tag != this) return arguments[0].tag.view.apply(arguments[0].tag, arguments);
-		try {
-			if(this._buffer == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[],null,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "view"}));
-			}
-		} catch( e ) {
-			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [_buffer != null]",this,[],e,{ fileName : "ReceiptPrinter.hx", lineNumber : 36, className : "ReceiptPrinter", methodName : "view"}));
-		}
-		var _g7 = [];
-		var s = $iterator(this.get_receipt())();
-		while(s.hasNext()) {
-			var s1 = s.next();
-			_g7.push(m.m("p",s1 == "" ? m.trust("&nbsp;") : s1));
-		}
-		var __contract_output = m.m(".box",m.m(".slot",m.m(".paper",_g7)));
-		return __contract_output;
-	}
-	,__class__: ReceiptPrinter
-};
 var Reflect = function() { };
 Reflect.__name__ = ["Reflect"];
 Reflect.field = function(o,field) {
@@ -988,75 +500,6 @@ Reflect.field = function(o,field) {
 	} catch( e ) {
 		return null;
 	}
-};
-var RfidScanner = function(returnRfid) {
-	this.returnRfid = returnRfid;
-	this.lastScanned = haxe_ds_Option.None;
-	try {
-		if(this.lastScanned == null) {
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[returnRfid],null,{ fileName : "RfidScanner.hx", lineNumber : 43, className : "RfidScanner", methodName : "new"}));
-		}
-	} catch( e ) {
-		if (e instanceof js__$Boot_HaxeError) e = e.val;
-		throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[returnRfid],e,{ fileName : "RfidScanner.hx", lineNumber : 43, className : "RfidScanner", methodName : "new"}));
-	}
-	try {
-		if(returnRfid == null) {
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[returnRfid],null,{ fileName : "RfidScanner.hx", lineNumber : 42, className : "RfidScanner", methodName : "new"}));
-		}
-	} catch( e1 ) {
-		if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
-		throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[returnRfid],e1,{ fileName : "RfidScanner.hx", lineNumber : 42, className : "RfidScanner", methodName : "new"}));
-	}
-};
-RfidScanner.__name__ = ["RfidScanner"];
-RfidScanner.__interfaces__ = [haxecontracts_HaxeContracts];
-RfidScanner.prototype = {
-	scanRfid: function(callback) {
-		var _gthis = this;
-		haxe_Timer.delay(function() {
-			var scanned = _gthis.returnRfid();
-			callback(scanned);
-			_gthis.lastScanned = scanned;
-		},0);
-		try {
-			if(this.lastScanned == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[callback],null,{ fileName : "RfidScanner.hx", lineNumber : 43, className : "RfidScanner", methodName : "scanRfid"}));
-			}
-		} catch( e ) {
-			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[callback],e,{ fileName : "RfidScanner.hx", lineNumber : 43, className : "RfidScanner", methodName : "scanRfid"}));
-		}
-		try {
-			if(this.returnRfid == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[callback],null,{ fileName : "RfidScanner.hx", lineNumber : 42, className : "RfidScanner", methodName : "scanRfid"}));
-			}
-		} catch( e1 ) {
-			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[callback],e1,{ fileName : "RfidScanner.hx", lineNumber : 42, className : "RfidScanner", methodName : "scanRfid"}));
-		}
-	}
-	,lastScannedRfid: function() {
-		try {
-			if(this.lastScanned == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[],null,{ fileName : "RfidScanner.hx", lineNumber : 43, className : "RfidScanner", methodName : "lastScannedRfid"}));
-			}
-		} catch( e ) {
-			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[],e,{ fileName : "RfidScanner.hx", lineNumber : 43, className : "RfidScanner", methodName : "lastScannedRfid"}));
-		}
-		try {
-			if(this.returnRfid == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[],null,{ fileName : "RfidScanner.hx", lineNumber : 42, className : "RfidScanner", methodName : "lastScannedRfid"}));
-			}
-		} catch( e1 ) {
-			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[],e1,{ fileName : "RfidScanner.hx", lineNumber : 42, className : "RfidScanner", methodName : "lastScannedRfid"}));
-		}
-		var __contract_output = this.lastScanned;
-		return __contract_output;
-	}
-	,__class__: RfidScanner
 };
 var SingleEventHandler = function() {
 };
@@ -1126,16 +569,6 @@ SingleEventHandler.prototype = {
 	}
 	,__class__: SingleEventHandler
 };
-var Slambda = function() { };
-Slambda.__name__ = ["Slambda"];
-var Slambda1 = function() { };
-Slambda1.__name__ = ["Slambda1"];
-var Slambda2 = function() { };
-Slambda2.__name__ = ["Slambda2"];
-var Slambda3 = function() { };
-Slambda3.__name__ = ["Slambda3"];
-var Slambda4 = function() { };
-Slambda4.__name__ = ["Slambda4"];
 var Std = function() { };
 Std.__name__ = ["Std"];
 Std.string = function(s) {
@@ -1231,6 +664,546 @@ Type.enumEq = function(a,b) {
 		return false;
 	}
 	return true;
+};
+var contexts_BorrowLoanItemStatus = { __ename__ : true, __constructs__ : ["Ok","ItemAlreadyBorrowed","InvalidBorrower","InvalidLoanItem"] };
+contexts_BorrowLoanItemStatus.Ok = function(loan) { var $x = ["Ok",0,loan]; $x.__enum__ = contexts_BorrowLoanItemStatus; return $x; };
+contexts_BorrowLoanItemStatus.ItemAlreadyBorrowed = ["ItemAlreadyBorrowed",1];
+contexts_BorrowLoanItemStatus.ItemAlreadyBorrowed.__enum__ = contexts_BorrowLoanItemStatus;
+contexts_BorrowLoanItemStatus.InvalidBorrower = ["InvalidBorrower",2];
+contexts_BorrowLoanItemStatus.InvalidBorrower.__enum__ = contexts_BorrowLoanItemStatus;
+contexts_BorrowLoanItemStatus.InvalidLoanItem = ["InvalidLoanItem",3];
+contexts_BorrowLoanItemStatus.InvalidLoanItem.__enum__ = contexts_BorrowLoanItemStatus;
+var dci_Context = function() { };
+dci_Context.__name__ = ["dci","Context"];
+var contexts_BorrowLoanItem = function(loanItem,borrower) {
+	this.listOfLibraryCards = Data.libraryCards;
+	this.listOfItems = Data.libraryItems;
+	this.listOfLoans = Data.libraryLoans;
+	this.loanItem = loanItem;
+	this.borrower = borrower;
+};
+contexts_BorrowLoanItem.__name__ = ["contexts","BorrowLoanItem"];
+contexts_BorrowLoanItem.__interfaces__ = [dci_Context];
+contexts_BorrowLoanItem.prototype = {
+	borrow: function() {
+		if(!this.listOfItems__hasLoanItem()) {
+			return contexts_BorrowLoanItemStatus.InvalidLoanItem;
+		} else if(!this.listOfLibraryCards__hasBorrowerID()) {
+			return contexts_BorrowLoanItemStatus.InvalidBorrower;
+		} else if(this.listOfLoans__hasBorrowedLoanItem()) {
+			return contexts_BorrowLoanItemStatus.ItemAlreadyBorrowed;
+		} else {
+			var loan = new LibraryLoan({ borrowerRfid : this.borrower__id(), loanItemRfid : this.loanItem__id(), created : new Date(), returnDate : this.loanItem__returnDateFromToday()});
+			this.listOfLoans__addLoan(loan);
+			return contexts_BorrowLoanItemStatus.Ok(loan);
+		}
+	}
+	,listOfLoans__hasBorrowedLoanItem: function() {
+		var _gthis = this;
+		return Lambda.exists(this.listOfLoans,function(loan) {
+			if(loan.loanItemRfid == _gthis.loanItem__id()) {
+				return loan.returnDate.getTime() > new Date().getTime();
+			} else {
+				return false;
+			}
+		});
+	}
+	,listOfLoans__addLoan: function(loan) {
+		this.listOfLoans.push(loan);
+	}
+	,listOfLibraryCards__hasBorrowerID: function() {
+		var _gthis = this;
+		return Lambda.exists(this.listOfLibraryCards,function(card) {
+			return card.rfid == _gthis.borrower__id();
+		});
+	}
+	,listOfItems__hasLoanItem: function() {
+		var _gthis = this;
+		return Lambda.exists(this.listOfItems,function(item) {
+			return item.rfid == _gthis.loanItem__id();
+		});
+	}
+	,loanItem__id: function() {
+		return this.loanItem.rfid;
+	}
+	,loanItem__returnDateFromToday: function() {
+		var t = new Date().getTime() + this.loanItem.loanTimeDays * 24 * 60 * 60 * 1000;
+		return new Date(t);
+	}
+	,borrower__id: function() {
+		return this.borrower.rfid;
+	}
+	,__class__: contexts_BorrowLoanItem
+};
+var contexts_DragDropMechanics = function(surfaces) {
+	try {
+		if(surfaces == null) {
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [surfaces != null]",this,[surfaces],null,{ fileName : "DragDropMechanics.hx", lineNumber : 40, className : "contexts.DragDropMechanics", methodName : "new"}));
+		}
+	} catch( e ) {
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
+		throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [surfaces != null]",this,[surfaces],e,{ fileName : "DragDropMechanics.hx", lineNumber : 40, className : "contexts.DragDropMechanics", methodName : "new"}));
+	}
+	this.surfaces = surfaces;
+};
+contexts_DragDropMechanics.__name__ = ["contexts","DragDropMechanics"];
+contexts_DragDropMechanics.__interfaces__ = [haxecontracts_HaxeContracts];
+contexts_DragDropMechanics.prototype = {
+	start: function() {
+		try {
+			if(Reflect.field(window,"dragula") == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [Reflect.field(Browser.window, \"dragula\") != null]",this,[],null,{ fileName : "DragDropMechanics.hx", lineNumber : 45, className : "contexts.DragDropMechanics", methodName : "start"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [Reflect.field(Browser.window, \"dragula\") != null]",this,[],e,{ fileName : "DragDropMechanics.hx", lineNumber : 45, className : "contexts.DragDropMechanics", methodName : "start"}));
+		}
+		var dragula = Reflect.field(window,"dragula");
+		var _g = [];
+		var id = this.surfaces.keys();
+		while(id.hasNext()) {
+			var id1 = id.next();
+			_g.push(HtmlTools.q("#" + id1));
+		}
+		this.drake = dragula(_g,{ accepts : $bind(this,this.acceptsDrop)}).on("drag",$bind(this,this.onDrag)).on("drop",$bind(this,this.onDrop));
+	}
+	,acceptsDrop: function(droppedItem,targetElement) {
+		try {
+			if(droppedItem == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [droppedItem != null]",this,[droppedItem,targetElement],null,{ fileName : "DragDropMechanics.hx", lineNumber : 58, className : "contexts.DragDropMechanics", methodName : "acceptsDrop"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [droppedItem != null]",this,[droppedItem,targetElement],e,{ fileName : "DragDropMechanics.hx", lineNumber : 58, className : "contexts.DragDropMechanics", methodName : "acceptsDrop"}));
+		}
+		try {
+			if(targetElement.id.length <= 0) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [targetElement.id.length > 0]",this,[droppedItem,targetElement],null,{ fileName : "DragDropMechanics.hx", lineNumber : 59, className : "contexts.DragDropMechanics", methodName : "acceptsDrop"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [targetElement.id.length > 0]",this,[droppedItem,targetElement],e1,{ fileName : "DragDropMechanics.hx", lineNumber : 59, className : "contexts.DragDropMechanics", methodName : "acceptsDrop"}));
+		}
+		var _g = targetElement.id;
+		switch(_g) {
+		case "card-reader":case "scanner":
+			return this.surfaces.get(targetElement.id).length < 1;
+		default:
+			if(droppedItem.classList.contains("card")) {
+				return targetElement.id != "bookshelf";
+			} else {
+				return targetElement.id != "card-reader";
+			}
+		}
+	}
+	,onDrag: function(el,sourceEl) {
+		try {
+			if(el == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [el != null]",this,[el,sourceEl],null,{ fileName : "DragDropMechanics.hx", lineNumber : 80, className : "contexts.DragDropMechanics", methodName : "onDrag"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [el != null]",this,[el,sourceEl],e,{ fileName : "DragDropMechanics.hx", lineNumber : 80, className : "contexts.DragDropMechanics", methodName : "onDrag"}));
+		}
+		try {
+			var key = sourceEl.id;
+			var _this = this.surfaces;
+			if(!(__map_reserved[key] != null ? _this.existsReserved(key) : _this.h.hasOwnProperty(key))) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("No surface found: " + sourceEl.id,this,[el,sourceEl],null,{ fileName : "DragDropMechanics.hx", lineNumber : 81, className : "contexts.DragDropMechanics", methodName : "onDrag"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("No surface found: " + sourceEl.id,this,[el,sourceEl],e1,{ fileName : "DragDropMechanics.hx", lineNumber : 81, className : "contexts.DragDropMechanics", methodName : "onDrag"}));
+		}
+		var key1 = sourceEl.id;
+		var _this1 = this.surfaces;
+		var surface = __map_reserved[key1] != null ? _this1.getReserved(key1) : _this1.h[key1];
+		var pos = HtmlTools.elPos(sourceEl.children,el);
+		try {
+			if(pos < 0) {
+				throw new js__$Boot_HaxeError(false);
+			}
+		} catch( e2 ) {
+			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Item not found in surface " + sourceEl.id,this,null,typeof(e2) == "boolean" ? null : e2,{ fileName : "DragDropMechanics.hx", lineNumber : 85, className : "contexts.DragDropMechanics", methodName : "onDrag"}));
+		}
+		this.dragData = { source : surface, sourcePos : pos};
+	}
+	,onDrop: function(el,targetEl,_,sibling) {
+		try {
+			if(this.dragData == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [dragData != null]",this,[el,targetEl,_,sibling],null,{ fileName : "DragDropMechanics.hx", lineNumber : 96, className : "contexts.DragDropMechanics", methodName : "onDrop"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [dragData != null]",this,[el,targetEl,_,sibling],e,{ fileName : "DragDropMechanics.hx", lineNumber : 96, className : "contexts.DragDropMechanics", methodName : "onDrop"}));
+		}
+		try {
+			if(el == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [el != null]",this,[el,targetEl,_,sibling],null,{ fileName : "DragDropMechanics.hx", lineNumber : 97, className : "contexts.DragDropMechanics", methodName : "onDrop"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [el != null]",this,[el,targetEl,_,sibling],e1,{ fileName : "DragDropMechanics.hx", lineNumber : 97, className : "contexts.DragDropMechanics", methodName : "onDrop"}));
+		}
+		try {
+			var key = targetEl.id;
+			var _this = this.surfaces;
+			if(!(__map_reserved[key] != null ? _this.existsReserved(key) : _this.h.hasOwnProperty(key))) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("No surface found: " + targetEl.id,this,[el,targetEl,_,sibling],null,{ fileName : "DragDropMechanics.hx", lineNumber : 98, className : "contexts.DragDropMechanics", methodName : "onDrop"}));
+			}
+		} catch( e2 ) {
+			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("No surface found: " + targetEl.id,this,[el,targetEl,_,sibling],e2,{ fileName : "DragDropMechanics.hx", lineNumber : 98, className : "contexts.DragDropMechanics", methodName : "onDrop"}));
+		}
+		var key1 = targetEl.id;
+		var _this1 = this.surfaces;
+		var target = __map_reserved[key1] != null ? _this1.getReserved(key1) : _this1.h[key1];
+		var targetPos = sibling == null ? targetEl.children.length - 1 : HtmlTools.elPos(targetEl.children,sibling) - 1;
+		var removed = this.dragData.source.splice(this.dragData.sourcePos,1);
+		target.splice(targetPos,0,removed[0]);
+		this.dragData = null;
+		this.drake.cancel(true);
+		m.redraw();
+	}
+	,__class__: contexts_DragDropMechanics
+};
+var contexts_LibraryBorrowMachine = function(scanner,cardReader,screen,printer,keypad,finishButtons) {
+	this.scanner = scanner;
+	this.cardReader = cardReader;
+	this.screen = screen;
+	this.printer = printer;
+	this.keypad = keypad;
+	this.finishButtons = finishButtons;
+	this.library = Data;
+	this.scannedItems = [];
+};
+contexts_LibraryBorrowMachine.__name__ = ["contexts","LibraryBorrowMachine"];
+contexts_LibraryBorrowMachine.__interfaces__ = [dci_Context];
+contexts_LibraryBorrowMachine.prototype = {
+	start: function() {
+		this.resetState();
+		this.screen__displayWelcome();
+		this.cardReader__waitForCardChange();
+	}
+	,restart: function() {
+		this.resetState();
+		this.screen__displayThankYouMessage();
+		this.cardReader__waitForCardChange();
+	}
+	,resetState: function() {
+		this.scannedItems__clearItems();
+		this.pinAttemptsLeft = contexts_LibraryBorrowMachine.maxPinAttempts;
+		this.authorizedCard = null;
+		this.lastScannedRfid = haxe_ds_Option.None;
+	}
+	,cardReader__waitForCardChange: function() {
+		this.cardReader.scanRfid($bind(this,this.cardReader__rfidScanned));
+	}
+	,cardReader__rfidScanned: function(data) {
+		switch(data[1]) {
+		case 0:
+			var rfid = data[2];
+			this.cardReader__createWaitLoopForCardRemoval();
+			var card = this.library__card(rfid);
+			if(card != null) {
+				this.keypad__waitForEnterPin();
+			} else {
+				this.screen__displayInvalidCard();
+			}
+			break;
+		case 1:
+			this.cardReader__waitForCardChange();
+			break;
+		}
+	}
+	,cardReader__createWaitLoopForCardRemoval: function() {
+		var _gthis = this;
+		var removeCardLoop = new haxe_Timer(50);
+		removeCardLoop.run = function() {
+			_gthis.cardReader.scanRfid(function(data) {
+				if(Type.enumEq(data,haxe_ds_Option.None)) {
+					removeCardLoop.stop();
+					_gthis.restart();
+				}
+			});
+		};
+	}
+	,cardReader__validatePin: function(pin) {
+		var _gthis = this;
+		this.cardReader.scanRfid(function(data) {
+			switch(data[1]) {
+			case 0:
+				var rfid = data[2];
+				var card = _gthis.library__card(rfid);
+				if(card == null) {
+					_gthis.screen__displayInvalidCard();
+				} else if(card.pin == pin) {
+					_gthis.authorizedCard = card;
+					_gthis.screen__displayScannedItems();
+					_gthis.scanner__waitForItem();
+				} else if(--_gthis.pinAttemptsLeft > 0) {
+					_gthis.keypad__waitForEnterPin();
+				} else {
+					_gthis.screen__displayTooManyInvalidPin();
+				}
+				break;
+			case 1:
+				break;
+			}
+		});
+	}
+	,scanner__waitForItem: function() {
+		this.scanner.scanRfid($bind(this,this.scanner__rfidScanned));
+	}
+	,scanner__rfidScanned: function(rfid) {
+		if(this.authorizedCard == null) {
+			return;
+		}
+		if(Type.enumEq(rfid,this.lastScannedRfid)) {
+			this.scanner__waitForItem();
+			return;
+		} else {
+			this.lastScannedRfid = rfid;
+		}
+		switch(rfid[1]) {
+		case 0:
+			var rfid1 = rfid[2];
+			if(this.scannedItems__alreadyScanned(rfid1)) {
+				this.scanner__waitForItem();
+				return;
+			}
+			var item = this.library__item(rfid1);
+			if(item == null) {
+				this.scanner__waitForItem();
+				return;
+			}
+			var _g = new contexts_BorrowLoanItem(item,this.authorizedCard).borrow();
+			switch(_g[1]) {
+			case 0:
+				var loan = _g[2];
+				this.scannedItems__addItem({ item : item, returnDate : loan.returnDate});
+				this.screen__displayScannedItems();
+				this.scanner__waitForItem();
+				break;
+			case 1:
+				this.screen__displayAlreadyBorrowedMessage();
+				this.scanner__waitForItem();
+				break;
+			case 2:
+				this.screen__displayInvalidCard();
+				break;
+			case 3:
+				this.screen__displayInvalidLoanItemMessage();
+				this.scanner__waitForItem();
+				break;
+			}
+			break;
+		case 1:
+			this.scanner__waitForItem();
+			break;
+		}
+	}
+	,scannedItems__addItem: function(item) {
+		this.scannedItems.push(item);
+	}
+	,scannedItems__clearItems: function() {
+		this.scannedItems.splice(0,this.scannedItems.length);
+	}
+	,scannedItems__alreadyScanned: function(rfid) {
+		return Lambda.exists(this.scannedItems,function(scannedItem) {
+			return scannedItem.item.rfid == rfid;
+		});
+	}
+	,screen__displayWelcome: function() {
+		this.screen.display(views_ScreenState.Welcome);
+	}
+	,screen__displayThankYouMessage: function() {
+		this.screen.displayMessage(views_ScreenState.ThankYou,4000,views_ScreenState.Welcome);
+	}
+	,screen__displayEnterPin: function() {
+		this.screen.display(views_ScreenState.EnterPin({ previousAttemptFailed : this.pinAttemptsLeft < 3}));
+	}
+	,screen__displayScannedItems: function() {
+		this.finishButtons__waitForFinishClick();
+		this.screen.display(views_ScreenState.DisplayBorrowedItems(this.scannedItems));
+	}
+	,screen__displayTooManyInvalidPin: function() {
+		this.screen.display(views_ScreenState.TooManyInvalidPin);
+	}
+	,screen__displayInvalidCard: function() {
+		this.screen.display(views_ScreenState.InvalidCard);
+	}
+	,screen__displayInvalidLoanItemMessage: function() {
+		this.screen.displayMessage(views_ScreenState.InvalidLoanItem,3000);
+	}
+	,screen__displayAlreadyBorrowedMessage: function() {
+		this.screen.displayMessage(views_ScreenState.ItemAlreadyBorrowed,3000);
+	}
+	,screen__displayDontForgetLibraryCard: function() {
+		this.screen.display(views_ScreenState.DontForgetLibraryCard);
+	}
+	,finishButtons__waitForFinishClick: function() {
+		this.finishButtons.onFinishWithoutReceiptClicked($bind(this,this.screen__displayDontForgetLibraryCard),{ fileName : "LibraryBorrowMachine.hx", lineNumber : 223, className : "contexts.LibraryBorrowMachine", methodName : "finishButtons__waitForFinishClick"});
+		this.finishButtons.onFinishWithReceiptClicked($bind(this,this.printer__printReceipt),{ fileName : "LibraryBorrowMachine.hx", lineNumber : 224, className : "contexts.LibraryBorrowMachine", methodName : "finishButtons__waitForFinishClick"});
+	}
+	,keypad__waitForEnterPin: function() {
+		this.screen__displayEnterPin();
+		this.keypad.onPinCodeEntered($bind(this,this.cardReader__validatePin),{ fileName : "LibraryBorrowMachine.hx", lineNumber : 233, className : "contexts.LibraryBorrowMachine", methodName : "keypad__waitForEnterPin"});
+	}
+	,printer__printReceipt: function() {
+		var _gthis = this;
+		var buffer = [DateTools.format(new Date(),"%Y-%m-%d"),""];
+		var scanned = $iterator(this.scannedItems)();
+		while(scanned.hasNext()) {
+			var scanned1 = scanned.next();
+			buffer.push(scanned1.item.title);
+			var tmp = "Return on " + DateTools.format(scanned1.returnDate,"%Y-%m-%d");
+			buffer.push(tmp);
+			buffer.push("");
+		}
+		var timer = new haxe_Timer(80);
+		timer.run = function() {
+			_gthis.printer.print(buffer.pop());
+			if(buffer.length == 0) {
+				timer.stop();
+				_gthis.printer.cutPaper();
+				_gthis.screen__displayDontForgetLibraryCard();
+			}
+		};
+	}
+	,library__item: function(rfid) {
+		return Lambda.find(this.library.libraryItems,function(loanItem) {
+			return loanItem.rfid == rfid;
+		});
+	}
+	,library__card: function(rfid) {
+		return Lambda.find(this.library.libraryCards,function(libraryCard) {
+			return libraryCard.rfid == rfid;
+		});
+	}
+	,__class__: contexts_LibraryBorrowMachine
+};
+var mithril_Mithril = function() { };
+mithril_Mithril.__name__ = ["mithril","Mithril"];
+var gadgets_ReceiptPrinter = function() {
+	this.buffer = [];
+	this.paperIsCut = false;
+};
+gadgets_ReceiptPrinter.__name__ = ["gadgets","ReceiptPrinter"];
+gadgets_ReceiptPrinter.__interfaces__ = [mithril_Mithril,haxecontracts_HaxeContracts];
+gadgets_ReceiptPrinter.prototype = {
+	get_receipt: function() {
+		return this.buffer;
+	}
+	,print: function(line) {
+		if(this.paperIsCut) {
+			this.buffer = [];
+			this.paperIsCut = false;
+		}
+		this.buffer.unshift(line);
+		m.redraw();
+		try {
+			if(this.buffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[line],null,{ fileName : "ReceiptPrinter.hx", lineNumber : 43, className : "gadgets.ReceiptPrinter", methodName : "print"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[line],e,{ fileName : "ReceiptPrinter.hx", lineNumber : 43, className : "gadgets.ReceiptPrinter", methodName : "print"}));
+		}
+	}
+	,cutPaper: function() {
+		this.paperIsCut = true;
+	}
+	,view: function() {
+		if(arguments.length > 0 && arguments[0].tag != this) return arguments[0].tag.view.apply(arguments[0].tag, arguments);
+		try {
+			if(this.buffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[],null,{ fileName : "ReceiptPrinter.hx", lineNumber : 43, className : "gadgets.ReceiptPrinter", methodName : "view"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[],e,{ fileName : "ReceiptPrinter.hx", lineNumber : 43, className : "gadgets.ReceiptPrinter", methodName : "view"}));
+		}
+		var _g7 = [];
+		var s = $iterator(this.get_receipt())();
+		while(s.hasNext()) {
+			var s1 = s.next();
+			_g7.push(m.m("p",s1 == "" ? m.trust("&nbsp;") : s1));
+		}
+		var __contract_output = m.m(".box",m.m(".slot",m.m(".paper",_g7)));
+		return __contract_output;
+	}
+	,__class__: gadgets_ReceiptPrinter
+};
+var gadgets_RfidScanner = function(returnRfid) {
+	this.returnRfid = returnRfid;
+	this.lastScanned = haxe_ds_Option.None;
+	try {
+		if(returnRfid == null) {
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[returnRfid],null,{ fileName : "RfidScanner.hx", lineNumber : 48, className : "gadgets.RfidScanner", methodName : "new"}));
+		}
+	} catch( e ) {
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
+		throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[returnRfid],e,{ fileName : "RfidScanner.hx", lineNumber : 48, className : "gadgets.RfidScanner", methodName : "new"}));
+	}
+	try {
+		if(this.lastScanned == null) {
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[returnRfid],null,{ fileName : "RfidScanner.hx", lineNumber : 49, className : "gadgets.RfidScanner", methodName : "new"}));
+		}
+	} catch( e1 ) {
+		if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+		throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[returnRfid],e1,{ fileName : "RfidScanner.hx", lineNumber : 49, className : "gadgets.RfidScanner", methodName : "new"}));
+	}
+};
+gadgets_RfidScanner.__name__ = ["gadgets","RfidScanner"];
+gadgets_RfidScanner.__interfaces__ = [haxecontracts_HaxeContracts];
+gadgets_RfidScanner.prototype = {
+	scanRfid: function(callback) {
+		var _gthis = this;
+		haxe_Timer.delay(function() {
+			var scanned = _gthis.returnRfid();
+			callback(scanned);
+			_gthis.lastScanned = scanned;
+		},0);
+		try {
+			if(this.returnRfid == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[callback],null,{ fileName : "RfidScanner.hx", lineNumber : 48, className : "gadgets.RfidScanner", methodName : "scanRfid"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[callback],e,{ fileName : "RfidScanner.hx", lineNumber : 48, className : "gadgets.RfidScanner", methodName : "scanRfid"}));
+		}
+		try {
+			if(this.lastScanned == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[callback],null,{ fileName : "RfidScanner.hx", lineNumber : 49, className : "gadgets.RfidScanner", methodName : "scanRfid"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[callback],e1,{ fileName : "RfidScanner.hx", lineNumber : 49, className : "gadgets.RfidScanner", methodName : "scanRfid"}));
+		}
+	}
+	,lastScannedRfid: function() {
+		try {
+			if(this.returnRfid == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[],null,{ fileName : "RfidScanner.hx", lineNumber : 48, className : "gadgets.RfidScanner", methodName : "lastScannedRfid"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [returnRfid != null]",this,[],e,{ fileName : "RfidScanner.hx", lineNumber : 48, className : "gadgets.RfidScanner", methodName : "lastScannedRfid"}));
+		}
+		try {
+			if(this.lastScanned == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[],null,{ fileName : "RfidScanner.hx", lineNumber : 49, className : "gadgets.RfidScanner", methodName : "lastScannedRfid"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [lastScanned != null]",this,[],e1,{ fileName : "RfidScanner.hx", lineNumber : 49, className : "gadgets.RfidScanner", methodName : "lastScannedRfid"}));
+		}
+		var __contract_output = this.lastScanned;
+		return __contract_output;
+	}
+	,__class__: gadgets_RfidScanner
 };
 var haxe_StackItem = { __ename__ : true, __constructs__ : ["CFunction","Module","FilePos","Method","LocalFunction"] };
 haxe_StackItem.CFunction = ["CFunction",0];
@@ -1672,6 +1645,11 @@ js_Boot.__isNativeObj = function(o) {
 js_Boot.__resolveNativeClass = function(name) {
 	return $global[name];
 };
+var views__$HtmlElements_HtmlElements_$Impl_$ = {};
+views__$HtmlElements_HtmlElements_$Impl_$.__name__ = ["views","_HtmlElements","HtmlElements_Impl_"];
+views__$HtmlElements_HtmlElements_$Impl_$.toElement = function(this1) {
+	return window.document.querySelector("#" + this1);
+};
 var views_MainView = function(bookshelf,cardReader,workspace,itemScanner,screenView,printer) {
 	this.bookshelf = bookshelf;
 	this.workspace = workspace;
@@ -1684,32 +1662,32 @@ views_MainView.__name__ = ["views","MainView"];
 views_MainView.__interfaces__ = [mithril_Mithril];
 views_MainView.prototype = {
 	mount: function() {
-		m.mount(_$HtmlElements_HtmlElements_$Impl_$.toElement("screen"),this.screenView);
+		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("screen"),this.screenView);
 		var f = $bind(this,this.surfaceView);
 		var a1 = this.bookshelf;
 		var tmp = function() {
 			return f(a1);
 		};
-		m.mount(_$HtmlElements_HtmlElements_$Impl_$.toElement("bookshelf"),{ view : tmp});
+		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("bookshelf"),{ view : tmp});
 		var f1 = $bind(this,this.surfaceView);
 		var a11 = this.cardReader;
 		var tmp1 = function() {
 			return f1(a11);
 		};
-		m.mount(_$HtmlElements_HtmlElements_$Impl_$.toElement("card-reader"),{ view : tmp1});
+		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("card-reader"),{ view : tmp1});
 		var f2 = $bind(this,this.surfaceView);
 		var a12 = this.itemScanner;
 		var tmp2 = function() {
 			return f2(a12);
 		};
-		m.mount(_$HtmlElements_HtmlElements_$Impl_$.toElement("scanner"),{ view : tmp2});
+		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("scanner"),{ view : tmp2});
 		var f3 = $bind(this,this.surfaceView);
 		var a13 = this.workspace;
 		var tmp3 = function() {
 			return f3(a13);
 		};
-		m.mount(_$HtmlElements_HtmlElements_$Impl_$.toElement("workspace"),{ view : tmp3});
-		m.mount(_$HtmlElements_HtmlElements_$Impl_$.toElement("printer"),this.printer);
+		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("workspace"),{ view : tmp3});
+		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("printer"),this.printer);
 	}
 	,surfaceView: function(surface) {
 		return surface.map(function(item) {
@@ -1726,8 +1704,8 @@ views_MainView.prototype = {
 				case Book:
 					var item2 = item;
 					return m.m(".book.cover",item2.title);
-				case Card:
-					return m.m("img#card[src=images/card.svg]");
+				case LibraryCard:
+					return m.m("img.card[src=images/card.svg]");
 				default:
 					var unknown1 = _g;
 					var tmp1 = "View not found for: " + Type.getClassName(unknown1);
@@ -1738,7 +1716,7 @@ views_MainView.prototype = {
 	}
 	,__class__: views_MainView
 };
-var views_ScreenState = { __ename__ : true, __constructs__ : ["Welcome","EnterPin","DisplayBorrowedItems","ThankYou","TooManyInvalidPin","RemoveCard","InvalidCard","InvalidLoanItem","ItemAlreadyBorrowed","DontForgetLibraryCard"] };
+var views_ScreenState = { __ename__ : true, __constructs__ : ["Welcome","EnterPin","DisplayBorrowedItems","ThankYou","TooManyInvalidPin","InvalidCard","InvalidLoanItem","ItemAlreadyBorrowed","DontForgetLibraryCard"] };
 views_ScreenState.Welcome = ["Welcome",0];
 views_ScreenState.Welcome.__enum__ = views_ScreenState;
 views_ScreenState.EnterPin = function(data) { var $x = ["EnterPin",1,data]; $x.__enum__ = views_ScreenState; return $x; };
@@ -1747,42 +1725,63 @@ views_ScreenState.ThankYou = ["ThankYou",3];
 views_ScreenState.ThankYou.__enum__ = views_ScreenState;
 views_ScreenState.TooManyInvalidPin = ["TooManyInvalidPin",4];
 views_ScreenState.TooManyInvalidPin.__enum__ = views_ScreenState;
-views_ScreenState.RemoveCard = ["RemoveCard",5];
-views_ScreenState.RemoveCard.__enum__ = views_ScreenState;
-views_ScreenState.InvalidCard = ["InvalidCard",6];
+views_ScreenState.InvalidCard = ["InvalidCard",5];
 views_ScreenState.InvalidCard.__enum__ = views_ScreenState;
-views_ScreenState.InvalidLoanItem = ["InvalidLoanItem",7];
+views_ScreenState.InvalidLoanItem = ["InvalidLoanItem",6];
 views_ScreenState.InvalidLoanItem.__enum__ = views_ScreenState;
-views_ScreenState.ItemAlreadyBorrowed = ["ItemAlreadyBorrowed",8];
+views_ScreenState.ItemAlreadyBorrowed = ["ItemAlreadyBorrowed",7];
 views_ScreenState.ItemAlreadyBorrowed.__enum__ = views_ScreenState;
-views_ScreenState.DontForgetLibraryCard = ["DontForgetLibraryCard",9];
+views_ScreenState.DontForgetLibraryCard = ["DontForgetLibraryCard",8];
 views_ScreenState.DontForgetLibraryCard.__enum__ = views_ScreenState;
-var views_ScreenView = function(initialState) {
+var views_ScreenView = function() {
 	this._onFinishWithReceiptClicked = new SingleEventHandler();
 	this._onFinishWithoutReceiptClicked = new SingleEventHandler();
 	this._onPinCodeEntered = new SingleEventHandler();
 	this.pinBuffer = "";
-	this.display(initialState);
+	this.messageTimer = new haxe_Timer(1000);
+	this.currentState = views_ScreenState.Welcome;
 };
 views_ScreenView.__name__ = ["views","ScreenView"];
 views_ScreenView.__interfaces__ = [mithril_Mithril,haxecontracts_HaxeContracts];
 views_ScreenView.prototype = {
 	display: function(state) {
+		this.messageTimer.stop();
+		this.currentState = state;
+		m.redraw();
 		try {
-			if(state == null) {
-				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [state != null]",this,[state],null,{ fileName : "ScreenView.hx", lineNumber : 34, className : "views.ScreenView", methodName : "display"}));
+			if(this.currentState == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[state],null,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "display"}));
 			}
 		} catch( e ) {
 			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [state != null]",this,[state],e,{ fileName : "ScreenView.hx", lineNumber : 34, className : "views.ScreenView", methodName : "display"}));
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[state],e,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "display"}));
 		}
-		if(this.messageTimer != null) {
-			this.messageTimer.stop();
+		try {
+			if(this.pinBuffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[state],null,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "display"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[state],e1,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "display"}));
 		}
-		this.currentState = state;
-		m.redraw();
+		try {
+			if(this.messageTimer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[state],null,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "display"}));
+			}
+		} catch( e2 ) {
+			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[state],e2,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "display"}));
+		}
 	}
 	,displayMessage: function(state,waitMs,thenDisplay) {
+		try {
+			if(waitMs <= 0) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [waitMs > 0]",this,[state,waitMs,thenDisplay],null,{ fileName : "ScreenView.hx", lineNumber : 48, className : "views.ScreenView", methodName : "displayMessage"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [waitMs > 0]",this,[state,waitMs,thenDisplay],e,{ fileName : "ScreenView.hx", lineNumber : 48, className : "views.ScreenView", methodName : "displayMessage"}));
+		}
 		if(thenDisplay == null) {
 			thenDisplay = this.currentState;
 		}
@@ -1794,43 +1793,196 @@ views_ScreenView.prototype = {
 			f(a1);
 		};
 		this.messageTimer.run = tmp;
+		try {
+			if(this.currentState == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[state,waitMs,thenDisplay],null,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "displayMessage"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[state,waitMs,thenDisplay],e1,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "displayMessage"}));
+		}
+		try {
+			if(this.pinBuffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[state,waitMs,thenDisplay],null,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "displayMessage"}));
+			}
+		} catch( e2 ) {
+			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[state,waitMs,thenDisplay],e2,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "displayMessage"}));
+		}
+		try {
+			if(this.messageTimer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[state,waitMs,thenDisplay],null,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "displayMessage"}));
+			}
+		} catch( e3 ) {
+			if (e3 instanceof js__$Boot_HaxeError) e3 = e3.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[state,waitMs,thenDisplay],e3,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "displayMessage"}));
+		}
 	}
 	,onPinCodeEntered: function(callback,pos) {
+		try {
+			if(callback == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [callback != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 60, className : "views.ScreenView", methodName : "onPinCodeEntered"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [callback != null]",this,[callback,pos],e,{ fileName : "ScreenView.hx", lineNumber : 60, className : "views.ScreenView", methodName : "onPinCodeEntered"}));
+		}
 		this._onPinCodeEntered.set(callback,pos);
+		try {
+			if(this.currentState == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "onPinCodeEntered"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[callback,pos],e1,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "onPinCodeEntered"}));
+		}
+		try {
+			if(this.pinBuffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "onPinCodeEntered"}));
+			}
+		} catch( e2 ) {
+			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[callback,pos],e2,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "onPinCodeEntered"}));
+		}
+		try {
+			if(this.messageTimer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "onPinCodeEntered"}));
+			}
+		} catch( e3 ) {
+			if (e3 instanceof js__$Boot_HaxeError) e3 = e3.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[callback,pos],e3,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "onPinCodeEntered"}));
+		}
 	}
 	,onFinishWithoutReceiptClicked: function(callback,pos) {
+		try {
+			if(callback == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [callback != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 65, className : "views.ScreenView", methodName : "onFinishWithoutReceiptClicked"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [callback != null]",this,[callback,pos],e,{ fileName : "ScreenView.hx", lineNumber : 65, className : "views.ScreenView", methodName : "onFinishWithoutReceiptClicked"}));
+		}
 		this._onFinishWithoutReceiptClicked.set(callback,pos);
+		try {
+			if(this.currentState == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "onFinishWithoutReceiptClicked"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[callback,pos],e1,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "onFinishWithoutReceiptClicked"}));
+		}
+		try {
+			if(this.pinBuffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "onFinishWithoutReceiptClicked"}));
+			}
+		} catch( e2 ) {
+			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[callback,pos],e2,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "onFinishWithoutReceiptClicked"}));
+		}
+		try {
+			if(this.messageTimer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "onFinishWithoutReceiptClicked"}));
+			}
+		} catch( e3 ) {
+			if (e3 instanceof js__$Boot_HaxeError) e3 = e3.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[callback,pos],e3,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "onFinishWithoutReceiptClicked"}));
+		}
 	}
 	,onFinishWithReceiptClicked: function(callback,pos) {
+		try {
+			if(callback == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [callback != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 70, className : "views.ScreenView", methodName : "onFinishWithReceiptClicked"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [callback != null]",this,[callback,pos],e,{ fileName : "ScreenView.hx", lineNumber : 70, className : "views.ScreenView", methodName : "onFinishWithReceiptClicked"}));
+		}
 		this._onFinishWithReceiptClicked.set(callback,pos);
+		try {
+			if(this.currentState == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "onFinishWithReceiptClicked"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[callback,pos],e1,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "onFinishWithReceiptClicked"}));
+		}
+		try {
+			if(this.pinBuffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "onFinishWithReceiptClicked"}));
+			}
+		} catch( e2 ) {
+			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[callback,pos],e2,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "onFinishWithReceiptClicked"}));
+		}
+		try {
+			if(this.messageTimer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[callback,pos],null,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "onFinishWithReceiptClicked"}));
+			}
+		} catch( e3 ) {
+			if (e3 instanceof js__$Boot_HaxeError) e3 = e3.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[callback,pos],e3,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "onFinishWithReceiptClicked"}));
+		}
 	}
 	,view: function() {
 		if(arguments.length > 0 && arguments[0].tag != this) return arguments[0].tag.view.apply(arguments[0].tag, arguments);
+		try {
+			if(this.currentState == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[],null,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "view"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [currentState != null]",this,[],e,{ fileName : "ScreenView.hx", lineNumber : 77, className : "views.ScreenView", methodName : "view"}));
+		}
+		try {
+			if(this.pinBuffer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[],null,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "view"}));
+			}
+		} catch( e1 ) {
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [pinBuffer != null]",this,[],e1,{ fileName : "ScreenView.hx", lineNumber : 78, className : "views.ScreenView", methodName : "view"}));
+		}
+		try {
+			if(this.messageTimer == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[],null,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "view"}));
+			}
+		} catch( e2 ) {
+			if (e2 instanceof js__$Boot_HaxeError) e2 = e2.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract invariant failed for: [messageTimer != null]",this,[],e2,{ fileName : "ScreenView.hx", lineNumber : 79, className : "views.ScreenView", methodName : "view"}));
+		}
+		var __contract_output;
 		var _g = this.currentState;
 		switch(_g[1]) {
 		case 0:
-			return this.welcome();
+			__contract_output = this.welcome();
+			break;
 		case 1:
 			var data = _g[2];
-			return this.enterPin(data.previousAttemptFailed);
+			__contract_output = this.enterPin(data.previousAttemptFailed);
+			break;
 		case 2:
 			var scannedItems = _g[2];
-			return this.displayBorrowedItems(scannedItems);
+			__contract_output = this.displayBorrowedItems(scannedItems);
+			break;
 		case 3:
-			return this.thankYou();
+			__contract_output = this.thankYou();
+			break;
 		case 4:
-			return this.tooManyInvalidPin();
+			__contract_output = this.tooManyInvalidPin();
+			break;
+		case 5:
+			__contract_output = this.invalidCard();
+			break;
 		case 6:
-			return this.invalidCard();
+			__contract_output = this.invalidLoanItem();
+			break;
 		case 7:
-			return this.invalidLoanItem();
+			__contract_output = this.itemAlreadyBorrowed();
+			break;
 		case 8:
-			return this.itemAlreadyBorrowed();
-		case 9:
-			return this.dontForgetLibraryCard();
-		default:
-			return m.m(".content.red","View not found: " + Std.string(this.currentState));
+			__contract_output = this.dontForgetLibraryCard();
+			break;
 		}
+		return __contract_output;
 	}
 	,welcome: function() {
 		return m.m(".content",[m.m("p","Welcome to the library borrowing machine!"),m.m("p",m.m("strong","Please insert your card into the reader."))]);
@@ -1861,6 +2013,14 @@ views_ScreenView.prototype = {
 	}
 	,displayBorrowedItems: function(scannedItems) {
 		var _gthis = this;
+		try {
+			if(scannedItems == null) {
+				throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [scannedItems != null]",this,[scannedItems],null,{ fileName : "ScreenView.hx", lineNumber : 153, className : "views.ScreenView", methodName : "displayBorrowedItems"}));
+			}
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			throw new js__$Boot_HaxeError(new haxecontracts_ContractException("Contract precondition failed for: [scannedItems != null]",this,[scannedItems],e,{ fileName : "ScreenView.hx", lineNumber : 153, className : "views.ScreenView", methodName : "displayBorrowedItems"}));
+		}
 		var tmp = m.m("p","Scan the items you want to borrow on the dark red area.");
 		var tmp1 = m.m("p",[m.m("button.-success",{ style : "margin-right:2px", onclick : function() {
 			if(_gthis._onFinishWithReceiptClicked.hasEvent()) {
@@ -1945,26 +2105,25 @@ var __varName1 = GLOBAL.m;
 			}
 		})(__varName1);
 } catch(_) {}
-BorrowLibraryItems.__meta__ = { fields : { cardReader : { role : null}, scanner : { role : null}, scannedItems : { role : null}, screen : { role : null}, finishButtons : { role : null}, keypad : { role : null}, printer : { role : null}, library : { role : null}}};
-BorrowLibraryItems.maxPinAttempts = 3;
-BorrowLoanItem.__meta__ = { fields : { listOfLoans : { role : null}, listOfLibraryCards : { role : null}, listOfItems : { role : null}, loanItem : { role : null}, borrower : { role : null}}};
 Book.__meta__ = { obj : { dataClassRtti : [{ rfid : "String", title : "String", loanTimeDays : "Int"}]}};
 Bluray.__meta__ = { obj : { dataClassRtti : [{ rfid : "String", title : "String", length : "Int", loanTimeDays : "Int"}]}};
-Card.__meta__ = { obj : { dataClassRtti : [{ rfid : "String", name : "String", pin : "String"}]}};
+LibraryCard.__meta__ = { obj : { dataClassRtti : [{ rfid : "String", name : "String", pin : "String"}]}};
 LibraryLoan.__meta__ = { obj : { dataClassRtti : [{ loanItemRfid : "String", borrowerRfid : "String", created : "Date", returnDate : "Date"}]}};
 DateTools.DAY_SHORT_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 DateTools.DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 DateTools.MONTH_SHORT_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 DateTools.MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-_$HtmlElements_HtmlElements_$Impl_$.Bookshelf = "bookshelf";
-_$HtmlElements_HtmlElements_$Impl_$.Printer = "printer";
-_$HtmlElements_HtmlElements_$Impl_$.Screen = "screen";
-_$HtmlElements_HtmlElements_$Impl_$.CardReader = "card-reader";
-_$HtmlElements_HtmlElements_$Impl_$.Workspace = "workspace";
-_$HtmlElements_HtmlElements_$Impl_$.Scanner = "scanner";
-_$HtmlElements_HtmlElements_$Impl_$.Card = "card";
+contexts_BorrowLoanItem.__meta__ = { fields : { listOfLoans : { role : null}, listOfLibraryCards : { role : null}, listOfItems : { role : null}, loanItem : { role : null}, borrower : { role : null}}};
+contexts_LibraryBorrowMachine.__meta__ = { fields : { cardReader : { role : null}, scanner : { role : null}, scannedItems : { role : null}, screen : { role : null}, finishButtons : { role : null}, keypad : { role : null}, printer : { role : null}, library : { role : null}}};
+contexts_LibraryBorrowMachine.maxPinAttempts = 3;
 haxecontracts_Contract.implementationError = "A class calling haxecontracts.Contract must implement haxecontracts.HaxeContracts";
 js_Boot.__toStr = ({ }).toString;
+views__$HtmlElements_HtmlElements_$Impl_$.Bookshelf = "bookshelf";
+views__$HtmlElements_HtmlElements_$Impl_$.Printer = "printer";
+views__$HtmlElements_HtmlElements_$Impl_$.Screen = "screen";
+views__$HtmlElements_HtmlElements_$Impl_$.CardReader = "card-reader";
+views__$HtmlElements_HtmlElements_$Impl_$.Workspace = "workspace";
+views__$HtmlElements_HtmlElements_$Impl_$.Scanner = "scanner";
 Main.main();
 })(typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
 
