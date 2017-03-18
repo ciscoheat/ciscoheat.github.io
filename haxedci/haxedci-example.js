@@ -1665,6 +1665,7 @@ views_MainView.__interfaces__ = [mithril_Mithril];
 views_MainView.prototype = {
 	mount: function() {
 		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("screen"),this.screenView);
+		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("printer"),this.printer);
 		var f = $bind(this,this.surfaceView);
 		var a1 = this.bookshelf;
 		var tmp = function() {
@@ -1689,7 +1690,6 @@ views_MainView.prototype = {
 			return f3(a13);
 		};
 		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("workspace"),{ view : tmp3});
-		m.mount(views__$HtmlElements_HtmlElements_$Impl_$.toElement("printer"),this.printer);
 	}
 	,surfaceView: function(surface) {
 		return surface.map(function(item) {
