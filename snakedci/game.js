@@ -160,24 +160,22 @@ _$DeepState_DeepStateNode_$Impl_$.isNextLeaf = function(this1) {
 	}
 };
 var GameState = function(playfieldSize,segmentSize) {
-	DeepState.call(this,{ snake : { segments : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([]), nextMoveTime : 0.0, currentDirection : Phaser.RIGHT, wantedDirection : Phaser.RIGHT}, fruit : { x : 0, y : 0}, score : 0, hiScore : 0, playfield : { width : playfieldSize, height : playfieldSize, squareSize : segmentSize}});
+	DeepState.call(this,{ snake : { segments : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([]), nextMoveTime : 0.0, currentDirection : 0, wantedDirection : 0}, fruit : { x : 0, y : 0}, score : 0, hiScore : 0, playfield : { width : playfieldSize, height : playfieldSize, squareSize : segmentSize}, active : false});
 };
 GameState.__name__ = true;
 GameState.__super__ = DeepState;
 GameState.prototype = $extend(DeepState.prototype,{
-	initializeGame: function() {
-		var X = this.state.playfield.width / 2 | 0;
-		var Y = this.state.playfield.height / 2 | 0;
-		var segments = [{ x : X, y : Y},{ x : X - 1, y : Y},{ x : X - 2, y : Y}];
-		var tmp = { path : "snake", value : { segments : segments, nextMoveTime : 0.0, currentDirection : Phaser.RIGHT, wantedDirection : Phaser.RIGHT}};
-		var tmp1 = { x : Std.random(this.state.playfield.width) | 0, y : Std.random(this.state.playfield.height) | 0};
-		return this.update({ type : "GameState.initializeGame", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([tmp,{ path : "score", value : 0},{ path : "fruit", value : tmp1}])});
+	fruitEaten: function(newScore,newFruitPos,newSegments) {
+		return this.update({ type : "GameState.fruitEaten", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([{ path : "score", value : newScore},{ path : "fruit", value : newFruitPos},{ path : "snake.segments", value : newSegments}])});
 	}
-	,fruitEaten: function(newFruitPos) {
-		var tmp = { path : "score", value : this.state.score + 10};
-		var s = this.state.snake.segments;
-		var tmp1 = ds__$ImmutableArray_ImmutableArray_$Impl_$.push(s,s[s.length - 1]);
-		return this.update({ type : "GameState.fruitEaten", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([tmp,{ path : "fruit", value : newFruitPos},{ path : "snake.segments", value : tmp1}])});
+	,gameOver: function() {
+		return this.update({ type : "GameState.gameOver", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([{ path : "active", value : false}])});
+	}
+	,moveSnake: function(newSegments,newDir,speedMs) {
+		return this.update({ type : "GameState.moveSnake", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([{ path : "snake", value : { segments : newSegments, nextMoveTime : speedMs, currentDirection : newDir, wantedDirection : newDir}}])});
+	}
+	,initializeGame: function(startSegments,fruitPos,hiScore) {
+		return this.update({ type : "GameState.initializeGame", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([{ path : "snake", value : { segments : startSegments, nextMoveTime : 0.0, currentDirection : Phaser.RIGHT, wantedDirection : Phaser.RIGHT}},{ path : "score", value : 0},{ path : "hiScore", value : hiScore},{ path : "fruit", value : fruitPos},{ path : "active", value : true}])});
 	}
 	,updateMoveTimer: function(nextMoveTime) {
 		return this.update({ type : "GameState.updateMoveTimer", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([{ path : "snake.nextMoveTime", value : nextMoveTime}])});
@@ -185,21 +183,13 @@ GameState.prototype = $extend(DeepState.prototype,{
 	,updateDirection: function(wantedDirection) {
 		return this.update({ type : "GameState.updateDirection", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([{ path : "snake.wantedDirection", value : wantedDirection}])});
 	}
-	,gameOver: function() {
-		return this.update({ type : "GameState.gameOver", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([{ path : "snake.nextMoveTime", value : 2147483647}])});
-	}
-	,newHiscore: function(score) {
-		return this.update({ type : "GameState.newHiscore", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([{ path : "hiScore", value : score}])});
-	}
-	,moveSnake: function(segments,newDir,speed) {
-		return this.update({ type : "GameState.moveSnake", updates : ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray([{ path : "snake", value : { segments : segments, nextMoveTime : speed, currentDirection : newDir, wantedDirection : newDir}}])});
-	}
 });
 var dci_Context = function() { };
 dci_Context.__name__ = true;
 var GameView = function(game,asset) {
 	this._game = game;
 	this._asset = asset;
+	this._tweens = [];
 	var playfield = this._asset.state.playfield;
 	var f = $bind(this,this.create);
 	var playfieldWidth = playfield.width * playfield.squareSize;
@@ -244,22 +234,43 @@ GameView.prototype = {
 		this.SCORE = this._game.add.text(10,10,"Score: " + this._asset.state.score,{ font : "20px Arial", fill : "#ffffff", align : "left", boundsAlignH : "left", boundsAlignV : "top"});
 		var highScore = this._asset.state.hiScore;
 		this.HISCORE = this._game.add.text(0,0,"Hi-score: " + highScore,{ font : "20px Arial", fill : "#ffffff", align : "right", boundsAlignH : "right", boundsAlignV : "top"}).setTextBounds(this._game.world.width - 150,10,140,20);
+		var fruit = group.create(0,0,this._textures.fruit);
+		fruit.anchor = new PIXI.Point(0.5,0.5);
+		var tween = this._game.add.tween(fruit).to({ angle : 360},550,"Linear",true,1000).repeat(-1,1000);
+		this._tweens.push(tween);
+		this.FRUIT = fruit;
 		this.SNAKE = group.add(this._game.add.group());
-		this.FRUIT = group.create(0,0,this._textures.fruit);
-		this._asset.initializeGame();
+		var X = this._asset.state.playfield.width / 2 | 0;
+		var Y = this._asset.state.playfield.height / 2 | 0;
+		var startSegments = [{ x : X, y : Y},{ x : X - 1, y : Y},{ x : X - 2, y : Y}];
+		var fruitStartPos = { x : Std.random(this._asset.state.playfield.width) | 0, y : Std.random(this._asset.state.playfield.height) | 0};
+		var hi = window.localStorage.getItem("hiScore");
+		var hiScore = hi == null ? 0 : Std.parseInt(hi);
+		this._asset.initializeGame(ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray(startSegments),fruitStartPos,hiScore);
 	}
 	,update: function() {
-		this.SNAKE__display(this._asset.state.snake.segments);
-		this.FRUIT__display(this._asset.state.fruit);
-		this.SCORE__display(this._asset.state.score);
-		this.HISCORE__display(this._asset.state.hiScore);
-		new contexts_Movement(this._asset).move(this._game.time.physicsElapsedMS);
-		new contexts_Controlling(this._asset,this._game.input.keyboard.createCursorKeys()).start();
-		new contexts_Collisions(this._asset,this._game).checkCollisions();
+		var state = this._asset.state;
+		this.SNAKE__display(state.snake.segments);
+		this.FRUIT__display(state.fruit);
+		this.SCORE__display(state.score);
+		this.HISCORE__display(state.hiScore);
+		if(state.active) {
+			new contexts_Movement(this._asset,this._game.time.physicsElapsedMS);
+			new contexts_Controlling(this._asset,this._game.input.keyboard.createCursorKeys());
+			new contexts_Collisions(this._asset,this._game);
+		} else {
+			var _g = 0;
+			var _g1 = this._tweens;
+			while(_g < _g1.length) {
+				var t = _g1[_g];
+				++_g;
+				t.stop();
+			}
+		}
 	}
 	,FRUIT__display: function(coord) {
-		var pixelX = coord.x * this.PLAYFIELD__squarePixelSize() + 1;
-		var pixelY = coord.y * this.PLAYFIELD__squarePixelSize() + 1;
+		var pixelX = coord.x * this.PLAYFIELD__squarePixelSize() + this.PLAYFIELD__squarePixelSize() / 2;
+		var pixelY = coord.y * this.PLAYFIELD__squarePixelSize() + this.PLAYFIELD__squarePixelSize() / 2;
 		this.FRUIT.x = pixelX;
 		this.FRUIT.y = pixelY;
 	}
@@ -306,7 +317,7 @@ var _$GameView_Textures = function(game,segmentSize) {
 	var fruit = game.make.graphics();
 	fruit.lineStyle(1,16720435,1);
 	fruit.beginFill(16724804,1);
-	fruit.drawRect(0,0,segmentSize - 3,segmentSize - 3);
+	fruit.drawRect(0,0,segmentSize - 4,segmentSize - 4);
 	fruit.endFill();
 	game.load.image("background","assets/connectwork.png");
 	this.head = head.generateTexture();
@@ -317,6 +328,13 @@ var _$GameView_Textures = function(game,segmentSize) {
 _$GameView_Textures.__name__ = true;
 var HxOverrides = function() { };
 HxOverrides.__name__ = true;
+HxOverrides.cca = function(s,index) {
+	var x = s.charCodeAt(index);
+	if(x != x) {
+		return undefined;
+	}
+	return x;
+};
 HxOverrides.remove = function(a,obj) {
 	var i = a.indexOf(obj);
 	if(i == -1) {
@@ -563,6 +581,19 @@ Reflect.copy = function(o) {
 };
 var Std = function() { };
 Std.__name__ = true;
+Std.string = function(s) {
+	return js_Boot.__string_rec(s,"");
+};
+Std.parseInt = function(x) {
+	var v = parseInt(x,10);
+	if(v == 0 && (HxOverrides.cca(x,1) == 120 || HxOverrides.cca(x,1) == 88)) {
+		v = parseInt(x);
+	}
+	if(isNaN(v)) {
+		return null;
+	}
+	return v;
+};
 Std.random = function(x) {
 	if(x <= 0) {
 		return 0;
@@ -573,17 +604,17 @@ Std.random = function(x) {
 var contexts_Collisions = function(asset,game) {
 	this.SNAKE = asset.state.snake;
 	this.FRUIT = asset.state.fruit;
-	this.SCORE = asset;
-	this._game = game;
+	this.GAME = asset.state;
 	this._asset = asset;
+	this.checkCollisions(game);
 };
 contexts_Collisions.__name__ = true;
 contexts_Collisions.__interfaces__ = [dci_Context];
 contexts_Collisions.prototype = {
-	checkCollisions: function() {
+	checkCollisions: function(game) {
 		this.SNAKE__checkForFruitCollision();
 		if(this.SNAKE__checkForCollisionWithItself()) {
-			new contexts_GameOver(this._asset,this._game).start();
+			new contexts_GameOver(this._asset,game);
 		}
 	}
 	,collides: function(c1,c2) {
@@ -618,6 +649,10 @@ contexts_Collisions.prototype = {
 			}
 		});
 	}
+	,SNAKE__addSegment: function(fruitPos,score) {
+		var newSegments = ds__$ImmutableArray_ImmutableArray_$Impl_$.push(this.SNAKE.segments,this.SNAKE.segments[this.SNAKE.segments.length - 1]);
+		this._asset.fruitEaten(score,fruitPos,newSegments);
+	}
 	,FRUIT__moveToRandomLocation: function() {
 		var newPos;
 		while(true) {
@@ -628,20 +663,21 @@ contexts_Collisions.prototype = {
 				break;
 			}
 		}
-		this.SCORE__increase(newPos);
+		this.GAME__increaseScore(newPos);
 	}
-	,SCORE__increase: function(newPos) {
-		this._asset.fruitEaten(newPos);
+	,GAME__increaseScore: function(newFruitPos) {
+		this.SNAKE__addSegment(newFruitPos,this.GAME.score + 10);
 	}
 };
 var contexts_Controlling = function(SNAKE,CONTROLLER) {
 	this.SNAKE = SNAKE;
 	this.CONTROLLER = CONTROLLER;
+	this.checkDirection();
 };
 contexts_Controlling.__name__ = true;
 contexts_Controlling.__interfaces__ = [dci_Context];
 contexts_Controlling.prototype = {
-	start: function() {
+	checkDirection: function() {
 		this.SNAKE__checkDirection();
 	}
 	,SNAKE__checkDirection: function() {
@@ -667,40 +703,38 @@ contexts_Controlling.prototype = {
 var contexts_GameOver = function(asset,game) {
 	this.SCREEN = game;
 	this.GAME = asset.state;
+	this.CONTROLLER = game.input;
 	this._game = game;
-	this._asset = asset;
+	this.start(asset);
 };
 contexts_GameOver.__name__ = true;
 contexts_GameOver.__interfaces__ = [dci_Context];
 contexts_GameOver.prototype = {
-	start: function() {
+	start: function(asset) {
+		asset.gameOver();
 		this.SCREEN__displayGameOver();
 	}
-	,GAME__waitForRestart: function() {
-		var _gthis = this;
-		this._asset.gameOver();
-		var restart = function() {
-			_gthis.GAME__submitHiscore();
-			_gthis._game.state.restart();
-		};
-		this._game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).onUp.addOnce(restart);
+	,CONTROLLER__waitForRestart: function() {
+		this.CONTROLLER.keyboard.addKey(Phaser.Keyboard.SPACEBAR).onUp.addOnce(($_=this._game.state,$bind($_,$_.restart)));
 	}
 	,GAME__submitHiscore: function() {
 		if(this.GAME.score > this.GAME.hiScore) {
-			this._asset.newHiscore(this.GAME.score);
+			window.localStorage.setItem("hiScore",Std.string(this.GAME.score));
 		}
+		this.CONTROLLER__waitForRestart();
 	}
 	,SCREEN__displayGameOver: function() {
 		this.SCREEN.add.text(0,0,"GAME OVER",{ font : "50px Arial", fill : "#ffffff", stroke : "#000000", strokeThickness : 3, align : "center", boundsAlignH : "center", boundsAlignV : "middle"}).setTextBounds(0,-20,this.SCREEN.width,this.SCREEN.height);
 		this.SCREEN.add.text(0,0,"Press space to restart",{ font : "20px Arial", fill : "#ffffff", stroke : "#000000", strokeThickness : 2, align : "center", boundsAlignH : "center", boundsAlignV : "middle"}).setTextBounds(0,30,this.SCREEN.width,this.SCREEN.height);
-		this.GAME__waitForRestart();
+		this.GAME__submitHiscore();
 	}
 };
-var contexts_Movement = function(asset) {
+var contexts_Movement = function(asset,msElapsed) {
 	this._asset = asset;
 	this.PLAYFIELD = asset.state.playfield;
 	this.SNAKE = asset.state.snake;
 	this.HEAD = asset.state.snake.segments[0];
+	this.move(msElapsed);
 };
 contexts_Movement.__name__ = true;
 contexts_Movement.__interfaces__ = [dci_Context];
@@ -732,13 +766,20 @@ contexts_Movement.prototype = {
 		newPos.pop();
 		this._asset.moveSnake(ds__$ImmutableArray_ImmutableArray_$Impl_$.fromArray(newPos),newDir,this.SNAKE__moveSpeed(newPos.length) + timerDelta);
 	}
+	,SNAKE__moveDirection: function() {
+		if(this.SNAKE.wantedDirection == Phaser.RIGHT && this.SNAKE.currentDirection == Phaser.LEFT || this.SNAKE.wantedDirection == Phaser.LEFT && this.SNAKE.currentDirection == Phaser.RIGHT || this.SNAKE.wantedDirection == Phaser.UP && this.SNAKE.currentDirection == Phaser.DOWN || this.SNAKE.wantedDirection == Phaser.DOWN && this.SNAKE.currentDirection == Phaser.UP) {
+			return this.SNAKE.currentDirection;
+		} else {
+			return this.SNAKE.wantedDirection;
+		}
+	}
 	,SNAKE__moveSpeed: function(numberOfSegments) {
 		return Math.max(150 - numberOfSegments * 3,50);
 	}
 	,HEAD__moveOneStepAhead: function(timerDelta) {
 		var nextX = this.HEAD.x;
 		var nextY = this.HEAD.y;
-		var moveDir = this.HEAD__disallowOppositeDirectionMove();
+		var moveDir = this.SNAKE__moveDirection();
 		if(moveDir == Phaser.UP) {
 			nextY = this.HEAD.y - 1;
 		} else if(moveDir == Phaser.DOWN) {
@@ -759,13 +800,6 @@ contexts_Movement.prototype = {
 			nextY = this.PLAYFIELD.height - 1;
 		}
 		this.SNAKE__moveTo(nextX,nextY,moveDir,timerDelta);
-	}
-	,HEAD__disallowOppositeDirectionMove: function() {
-		if(this.SNAKE.wantedDirection == Phaser.RIGHT && this.SNAKE.currentDirection == Phaser.LEFT || this.SNAKE.wantedDirection == Phaser.LEFT && this.SNAKE.currentDirection == Phaser.RIGHT || this.SNAKE.wantedDirection == Phaser.UP && this.SNAKE.currentDirection == Phaser.DOWN || this.SNAKE.wantedDirection == Phaser.DOWN && this.SNAKE.currentDirection == Phaser.UP) {
-			return this.SNAKE.currentDirection;
-		} else {
-			return this.SNAKE.wantedDirection;
-		}
 	}
 };
 var ds__$ImmutableArray_ImmutableArray_$Impl_$ = {};
@@ -957,6 +991,95 @@ js__$Boot_HaxeError.wrap = function(val) {
 js__$Boot_HaxeError.__super__ = Error;
 js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
 });
+var js_Boot = function() { };
+js_Boot.__name__ = true;
+js_Boot.__string_rec = function(o,s) {
+	if(o == null) {
+		return "null";
+	}
+	if(s.length >= 5) {
+		return "<...>";
+	}
+	var t = typeof(o);
+	if(t == "function" && (o.__name__ || o.__ename__)) {
+		t = "object";
+	}
+	switch(t) {
+	case "function":
+		return "<function>";
+	case "object":
+		if(o.__enum__) {
+			var e = $hxEnums[o.__enum__];
+			var n = e.__constructs__[o._hx_index];
+			var con = e[n];
+			if(con.__params__) {
+				s += "\t";
+				var tmp = n + "(";
+				var _g = [];
+				var _g1 = 0;
+				var _g2 = con.__params__;
+				while(_g1 < _g2.length) {
+					var p = _g2[_g1];
+					++_g1;
+					_g.push(js_Boot.__string_rec(o[p],s));
+				}
+				return tmp + _g.join(",") + ")";
+			} else {
+				return n;
+			}
+		}
+		if((o instanceof Array)) {
+			var l = o.length;
+			var i;
+			var str = "[";
+			s += "\t";
+			var _g11 = 0;
+			var _g3 = l;
+			while(_g11 < _g3) {
+				var i1 = _g11++;
+				str += (i1 > 0 ? "," : "") + js_Boot.__string_rec(o[i1],s);
+			}
+			str += "]";
+			return str;
+		}
+		var tostr;
+		try {
+			tostr = o.toString;
+		} catch( e1 ) {
+			var e2 = (e1 instanceof js__$Boot_HaxeError) ? e1.val : e1;
+			return "???";
+		}
+		if(tostr != null && tostr != Object.toString && typeof(tostr) == "function") {
+			var s2 = o.toString();
+			if(s2 != "[object Object]") {
+				return s2;
+			}
+		}
+		var k = null;
+		var str1 = "{\n";
+		s += "\t";
+		var hasp = o.hasOwnProperty != null;
+		for( var k in o ) {
+		if(hasp && !o.hasOwnProperty(k)) {
+			continue;
+		}
+		if(k == "prototype" || k == "__class__" || k == "__super__" || k == "__interfaces__" || k == "__properties__") {
+			continue;
+		}
+		if(str1.length != 2) {
+			str1 += ", \n";
+		}
+		str1 += s + k + " : " + js_Boot.__string_rec(o[k],s);
+		}
+		s = s.substring(1);
+		str1 += "\n" + s + "}";
+		return str1;
+	case "string":
+		return o;
+	default:
+		return String(o);
+	}
+};
 function $getIterator(o) { if( o instanceof Array ) return HxOverrides.iter(o); else return o.iterator(); }
 var $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = m.bind(o); o.hx__closures__[m.__id__] = f; } return f; }
@@ -966,9 +1089,9 @@ Object.defineProperty(js__$Boot_HaxeError.prototype,"message",{ get : function()
 	return String(this.val);
 }});
 GameView.__meta__ = { fields : { FRUIT : { role : null}, PLAYFIELD : { role : null}, SNAKE : { role : null}, SCORE : { role : null}, HISCORE : { role : null}}};
-contexts_Collisions.__meta__ = { fields : { SNAKE : { role : null}, FRUIT : { role : null}, SCORE : { role : null}}};
+contexts_Collisions.__meta__ = { fields : { SNAKE : { role : null}, FRUIT : { role : null}, GAME : { role : null}}};
 contexts_Controlling.__meta__ = { fields : { SNAKE : { role : null}, CONTROLLER : { role : null}}};
-contexts_GameOver.__meta__ = { fields : { GAME : { role : null}, SCREEN : { role : null}}};
+contexts_GameOver.__meta__ = { fields : { CONTROLLER : { role : null}, GAME : { role : null}, SCREEN : { role : null}}};
 contexts_Movement.__meta__ = { fields : { PLAYFIELD : { role : null}, SNAKE : { role : null}, HEAD : { role : null}}};
 Main.main();
 })();
