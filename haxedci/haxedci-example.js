@@ -753,6 +753,13 @@ Std.parseInt = function(x) {
 	}
 	return null;
 };
+Std.random = function(x) {
+	if(x <= 0) {
+		return 0;
+	} else {
+		return Math.floor(Math.random() * x);
+	}
+};
 var StringTools = function() { };
 StringTools.__name__ = "StringTools";
 StringTools.isSpace = function(s,pos) {
@@ -1156,6 +1163,9 @@ contexts_LibraryBorrowMachine.prototype = {
 		this.scanner.scanRfid($bind(this,this.scanner__readLoanItem));
 	}
 	,scanner__readLoanItem: function(rfid) {
+		if(this.state.authorizedCard == null) {
+			return;
+		}
 		if(rfid._hx_index == 0) {
 			var rfid1 = rfid.v;
 			if(!this.scannedItems__alreadyScanned(rfid1)) {
@@ -1166,6 +1176,7 @@ contexts_LibraryBorrowMachine.prototype = {
 					this.scanner__borrowLoanItem(item);
 					break;
 				case 1:
+					this.screen__displayInvalidLoanItemMessage();
 					this.scanner__waitForItem();
 					break;
 				}
@@ -1177,6 +1188,7 @@ contexts_LibraryBorrowMachine.prototype = {
 		}
 	}
 	,scanner__borrowLoanItem: function(item) {
+		var _gthis = this;
 		if(this.state.authorizedCard == null) {
 			return;
 		}
@@ -1184,22 +1196,23 @@ contexts_LibraryBorrowMachine.prototype = {
 		switch(_g._hx_index) {
 		case 0:
 			var loan = _g.loan;
-			this.scannedItems__addItem(new ReceiptItem(item,loan.returnDate));
-			this.screen__displayScannedItems();
-			this.scanner__waitForItem();
-			break;
+			haxe_Timer.delay(function() {
+				_gthis.scannedItems__addItem(new ReceiptItem(item,loan.returnDate));
+				_gthis.screen__displayScannedItems();
+				_gthis.scanner__waitForItem();
+			},Std.random(400) + 100);
+			return;
 		case 1:
 			this.screen__displayAlreadyBorrowedMessage();
-			this.scanner__waitForItem();
 			break;
 		case 2:
 			this.screen__displayInvalidCard();
-			break;
+			return;
 		case 3:
 			this.screen__displayInvalidLoanItemMessage();
-			this.scanner__waitForItem();
 			break;
 		}
+		this.scanner__waitForItem();
 	}
 	,scannedItems__addItem: function(item) {
 		this.scannedItems.push(item);
@@ -1220,7 +1233,7 @@ contexts_LibraryBorrowMachine.prototype = {
 	}
 	,screen__displayEnterPin: function() {
 		this.keypad__waitForEnterPin();
-		this.screen.display(views_ScreenState.EnterPin({ previousAttemptFailed : this.state.pinAttemptsRemaining < 3}));
+		this.screen.display(views_ScreenState.EnterPin({ previousAttemptFailed : this.state.pinAttemptsRemaining < contexts_LibraryBorrowMachine.maxPinAttempts}));
 	}
 	,screen__displayScannedItems: function() {
 		this.finishButtons__waitForFinishClick();
@@ -1233,7 +1246,7 @@ contexts_LibraryBorrowMachine.prototype = {
 		this.screen.display(views_ScreenState.InvalidCard);
 	}
 	,screen__displayInvalidLoanItemMessage: function() {
-		this.screen.displayMessage(views_ScreenState.InvalidLoanItem,3000);
+		this.screen.displayMessage(views_ScreenState.InvalidLoanItem,100,views_ScreenState.DisplayBorrowedItems(this.scannedItems));
 	}
 	,screen__displayAlreadyBorrowedMessage: function() {
 		this.screen.displayMessage(views_ScreenState.ItemAlreadyBorrowed,3000);
@@ -1242,11 +1255,11 @@ contexts_LibraryBorrowMachine.prototype = {
 		this.screen.display(views_ScreenState.DontForgetLibraryCard);
 	}
 	,finishButtons__waitForFinishClick: function() {
-		this.finishButtons.onFinishWithoutReceiptClicked($bind(this,this.screen__displayDontForgetLibraryCard),{ fileName : "src/contexts/LibraryBorrowMachine.hx", lineNumber : 234, className : "contexts.LibraryBorrowMachine", methodName : "finishButtons__waitForFinishClick"});
-		this.finishButtons.onFinishWithReceiptClicked($bind(this,this.printer__printReceipt),{ fileName : "src/contexts/LibraryBorrowMachine.hx", lineNumber : 235, className : "contexts.LibraryBorrowMachine", methodName : "finishButtons__waitForFinishClick"});
+		this.finishButtons.onFinishWithoutReceiptClicked($bind(this,this.screen__displayDontForgetLibraryCard),{ fileName : "src/contexts/LibraryBorrowMachine.hx", lineNumber : 246, className : "contexts.LibraryBorrowMachine", methodName : "finishButtons__waitForFinishClick"});
+		this.finishButtons.onFinishWithReceiptClicked($bind(this,this.printer__printReceipt),{ fileName : "src/contexts/LibraryBorrowMachine.hx", lineNumber : 247, className : "contexts.LibraryBorrowMachine", methodName : "finishButtons__waitForFinishClick"});
 	}
 	,keypad__waitForEnterPin: function() {
-		this.keypad.onPinCodeEntered($bind(this,this.cardReader__validatePin),{ fileName : "src/contexts/LibraryBorrowMachine.hx", lineNumber : 243, className : "contexts.LibraryBorrowMachine", methodName : "keypad__waitForEnterPin"});
+		this.keypad.onPinCodeEntered($bind(this,this.cardReader__validatePin),{ fileName : "src/contexts/LibraryBorrowMachine.hx", lineNumber : 255, className : "contexts.LibraryBorrowMachine", methodName : "keypad__waitForEnterPin"});
 	}
 	,printer__printReceipt: function() {
 		var _gthis = this;
@@ -1327,25 +1340,26 @@ gadgets_ReceiptPrinter.prototype = {
 		m.redraw();
 		try {
 			if(this.buffer == null) {
-				throw haxe_Exception.thrown(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[line],null,{ fileName : "src/gadgets/ReceiptPrinter.hx", lineNumber : 43, className : "gadgets.ReceiptPrinter", methodName : "print"}));
+				throw haxe_Exception.thrown(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[line],null,{ fileName : "src/gadgets/ReceiptPrinter.hx", lineNumber : 45, className : "gadgets.ReceiptPrinter", methodName : "print"}));
 			}
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			throw haxe_Exception.thrown(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[line],e,{ fileName : "src/gadgets/ReceiptPrinter.hx", lineNumber : 43, className : "gadgets.ReceiptPrinter", methodName : "print"}));
+			throw haxe_Exception.thrown(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[line],e,{ fileName : "src/gadgets/ReceiptPrinter.hx", lineNumber : 45, className : "gadgets.ReceiptPrinter", methodName : "print"}));
 		}
 	}
 	,cutPaper: function() {
 		this.paperIsCut = true;
 	}
 	,view: function() {
+		var _gthis = this;
 		if(arguments.length > 0 && arguments[0].tag != this) return arguments[0].tag.view.apply(arguments[0].tag, arguments);
 		try {
 			if(this.buffer == null) {
-				throw haxe_Exception.thrown(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[],null,{ fileName : "src/gadgets/ReceiptPrinter.hx", lineNumber : 43, className : "gadgets.ReceiptPrinter", methodName : "view"}));
+				throw haxe_Exception.thrown(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[],null,{ fileName : "src/gadgets/ReceiptPrinter.hx", lineNumber : 45, className : "gadgets.ReceiptPrinter", methodName : "view"}));
 			}
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			throw haxe_Exception.thrown(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[],e,{ fileName : "src/gadgets/ReceiptPrinter.hx", lineNumber : 43, className : "gadgets.ReceiptPrinter", methodName : "view"}));
+			throw haxe_Exception.thrown(new haxecontracts_ContractException("Contract invariant failed for: [buffer != null]",this,[],e,{ fileName : "src/gadgets/ReceiptPrinter.hx", lineNumber : 45, className : "gadgets.ReceiptPrinter", methodName : "view"}));
 		}
 		var _g = [];
 		var s = $getIterator(this.get_receipt());
@@ -1353,7 +1367,11 @@ gadgets_ReceiptPrinter.prototype = {
 			var s1 = s.next();
 			_g.push(m.m("p",s1 == "" ? m.trust("&nbsp;") : s1));
 		}
-		var __contract_output = m.m(".box",m.m(".slot",m.m(".paper",_g)));
+		var __contract_output = m.m(".box",m.m(".slot",m.m(".paper",{ onclick : function() {
+			if(_gthis.paperIsCut) {
+				_gthis.buffer.splice(0,_gthis.buffer.length);
+			}
+		}},_g)));
 		return __contract_output;
 	}
 	,__class__: gadgets_ReceiptPrinter
