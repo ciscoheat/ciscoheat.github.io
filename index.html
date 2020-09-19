@@ -21,7 +21,7 @@
         <h2>
         <a id="haxe-libraries" class="anchor" href="#haxe-libraries" aria-hidden="true"><span class="octicon octicon-link"></span></a>Haxe libraries</h2>
         <p>All of these are available on <a href="http://lib.haxe.org/">haxelib</a> for a quick install. </p>
-        <p>The list is sorted in order of "importance", where importance is my estimation of how much the library will impact your thinking, programming style, and other long term benefits.</p>
+        <p>The list is sorted in order of "importance", meaning my estimation of how much the library will impact your thinking, programming style, and other long term benefits.</p>
         <table>
             <thead>
                 <tr>
@@ -34,7 +34,7 @@
                 <tr>
                     <td align="left"><a href="https://github.com/ciscoheat/haxedci">haxedci</a></td>
                     <td align="center">All</td>
-                    <td align="left">Taking programming into the next era with the <a href="http://fulloo.info/doku.php?id=faq">DCI architecture</a>. If you take your time to study and understand this paradigm created by the author of <a href="https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller">MVC</a>, you will become a better programmer, guaranteed.</td>
+                    <td align="left">Take programming into the next era with the <a href="http://fulloo.info/doku.php?id=faq">DCI architecture</a>. If you dedicate some time to study and understand this paradigm created by the author of <a href="https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller">MVC</a>, you will become a better programmer, guaranteed.</td>
                 </tr>
                 <tr>
                     <td align="left"><a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a></td>
@@ -62,10 +62,10 @@
                     <td align="left"><a href="http://mithril.js.org">Mithril</a> is a small, yet great javascript MVC framework that is faster and more flexible than most others. Here are Haxe externs for this library, which lets you solve complex problems with simple tools. The rendering part of Mithril has been ported to Haxe, so you can render Mithril templates on all targets. The framework itself is js only.</td>
                 </tr>
                 <tr>
-                    <td align="left"><a href="https://github.com/ciscoheat/slambda">slambda</a></td>
+                    <td align="left"><a href="https://github.com/ciscoheat/asynctools">uniontypes</a></td>
                     <td align="center">All</td>
-                    <td align="left">Do you crave Short Lambdas on Haxe 3? Understandable, every other language have them. Here's a tiny library that adds those convenient <code>x =&gt; x + 1</code> expressions to your Haxe code with a single <code>using</code> statement.</td>
-                </tr>
+                    <td align="left">Union types in Haxe, similar to Typescript. Gives type-safe control and safety when a library can return one thing <i>or</i> another.</td>
+                </tr>                
                 <tr>
                     <td align="left"><a href="https://github.com/ciscoheat/asynctools">asynctools</a></td>
                     <td align="center">All</td>
@@ -79,41 +79,17 @@
             </tbody>
         </table>
         <h2>
-        <a id="haxe-related" class="anchor" href="#haxe-related" aria-hidden="true"><span class="octicon octicon-link"></span></a>Haxe-related</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th align="left">Name</th>
-                    <th align="center">Targets</th>
-                    <th align="left">Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td align="left"><a href="https://github.com/ciscoheat/viagrant">viagrant</a></td>
-                    <td align="center">All and more</td>
-                    <td align="left">If you're using <a href="https://www.vagrantup.com/">Vagrant</a>, this will get a box with all your Haxe needs up and running in a few minutes. It supports LAMP and some other goodies.</td>
-                </tr>
-            </tbody>
-        </table>
-        <h2>
         <a id="synergy-between-the-libraries" class="anchor" href="#synergy-between-the-libraries" aria-hidden="true"><span class="octicon octicon-link"></span></a>Synergy between the libraries</h2>
         <p>Here's how I picture a system using the above libraries:</p>
         <h3>
         <a id="designing-the-system" class="anchor" href="#designing-the-system" aria-hidden="true"><span class="octicon octicon-link"></span></a>Designing the system</h3>
-        <ol>
+        <ul>
             <li>Create the data objects with <a href="https://github.com/ciscoheat/dataclass">dataclass</a> and validate their integrity with <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> when needed.</li>
             <li>Keep the program state of the above objects immutable with <a href="https://github.com/ciscoheat/deepstate">deepstate</a>.</li>
             <li>Use <a href="https://github.com/ciscoheat/buddy">buddy</a> to draw up the guidelines for the system behavior.</li>
             <li>Let the data objects interact in Contexts with the help of <a href="https://github.com/ciscoheat/haxedci">haxedci</a>, fleshing out the pending buddy tests with testing of the Contexts. <a href="https://github.com/ciscoheat/haxecontracts">HaxeContracts</a> will be of use too in the Contexts.</li>
-        </ol>
-        <h3>
-        <a id="implementation-details" class="anchor" href="#implementation-details" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implementation details</h3>
-        <ol>
-            <li>Let users interact with your system in an impressive browser app built with <a href="https://github.com/ciscoheat/mithril-hx">mithril-hx</a>
-            </li>
-            <li>For data storage where speed isn't a big concern, use the convenient JSON storage of <a href="https://github.com/ciscoheat/haxelow">haxelow</a>.</li>
-        </ol>
+            <li>Let users interact with your system in an impressive browser app built with <a href="https://github.com/ciscoheat/mithril-hx">mithril-hx</a></li>
+        </ul>
         <h2>
         <a id="contact-info" class="anchor" href="#contact-info" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contact info</h2>
         <p>If you want to give feedback for a specific library, I appreciate if you open a Github issue for it. If you want to get in touch about anything else, my email is <code>ciscoheat AT gmail</code>, and I also twitter quite infrequently under the name <a href="https://twitter.com/thedciguy">thedciguy</a>. Hope to hear from you!</p>
