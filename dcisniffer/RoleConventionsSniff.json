@@ -1,0 +1,274 @@
+{
+    "nodes": [
+        {
+            "id": "process",
+            "label": "process",
+            "group": "__CONTEXT"
+        },
+        {
+            "id": "_rebind",
+            "label": "_rebind",
+            "group": "__CONTEXT"
+        },
+        {
+            "id": "tokens_current",
+            "label": "tokens\ncurrent",
+            "group": "tokens"
+        },
+        {
+            "id": "tokens_get",
+            "label": "tokens\nget",
+            "group": "tokens"
+        },
+        {
+            "id": "parser_findNext",
+            "label": "parser\nfindNext",
+            "group": "parser"
+        },
+        {
+            "id": "parser_error",
+            "label": "parser\nerror",
+            "group": "parser"
+        },
+        {
+            "id": "parser_checkNewContext",
+            "label": "parser\ncheckNewContext",
+            "group": "parser"
+        },
+        {
+            "id": "parser_checkNewMethod",
+            "label": "parser\ncheckNewMethod",
+            "group": "parser"
+        },
+        {
+            "id": "currentMethod_exists",
+            "label": "currentMethod\nexists",
+            "group": "currentMethod"
+        },
+        {
+            "id": "currentMethod_checkForReferences",
+            "label": "currentMethod\ncheckForReferences",
+            "group": "currentMethod"
+        },
+        {
+            "id": "currentMethod_addRef",
+            "label": "currentMethod\naddRef",
+            "group": "currentMethod"
+        },
+        {
+            "id": "currentMethod_checkIfEnds",
+            "label": "currentMethod\ncheckIfEnds",
+            "group": "currentMethod"
+        },
+        {
+            "id": "context_exists",
+            "label": "context\nexists",
+            "group": "context"
+        },
+        {
+            "id": "context_endPos",
+            "label": "context\nendPos",
+            "group": "context"
+        },
+        {
+            "id": "context_addRole",
+            "label": "context\naddRole",
+            "group": "context"
+        },
+        {
+            "id": "context_addMethod",
+            "label": "context\naddMethod",
+            "group": "context"
+        },
+        {
+            "id": "context_checkForRoleDefinition",
+            "label": "context\ncheckForRoleDefinition",
+            "group": "context"
+        },
+        {
+            "id": "context_checkIfEnds",
+            "label": "context\ncheckIfEnds",
+            "group": "context"
+        },
+        {
+            "id": "context_checkRules",
+            "label": "context\ncheckRules",
+            "group": "context"
+        },
+        {
+            "id": "context_attachMethodsToRoles",
+            "label": "context\nattachMethodsToRoles",
+            "group": "context"
+        }
+    ],
+    "edges": [
+        {
+            "from": "process",
+            "to": "context_exists"
+        },
+        {
+            "from": "process",
+            "to": "currentMethod_exists"
+        },
+        {
+            "from": "process",
+            "to": "context_checkForRoleDefinition"
+        },
+        {
+            "from": "process",
+            "to": "currentMethod_checkForReferences"
+        },
+        {
+            "from": "_rebind",
+            "to": "parser_checkNewContext"
+        },
+        {
+            "from": "_rebind",
+            "to": "parser_checkNewMethod"
+        },
+        {
+            "from": "_rebind",
+            "to": "context_checkIfEnds"
+        },
+        {
+            "from": "_rebind",
+            "to": "currentMethod_checkIfEnds"
+        },
+        {
+            "from": "tokens_current",
+            "to": "tokens_get"
+        },
+        {
+            "from": "parser_checkNewContext",
+            "to": "context_exists"
+        },
+        {
+            "from": "parser_checkNewContext",
+            "to": "tokens_current"
+        },
+        {
+            "from": "parser_checkNewContext",
+            "to": "parser_findNext"
+        },
+        {
+            "from": "parser_checkNewContext",
+            "to": "tokens_get"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "context_exists"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "currentMethod_exists"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "tokens_current"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "parser_findNext"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "tokens_get"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "parser_findNext"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "tokens_get"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "tokens_get"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "context_addMethod"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "tokens_current"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "parser_findNext"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "tokens_get"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "tokens_get"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "tokens_get"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "tokens_get"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "currentMethod_addRef"
+        },
+        {
+            "from": "currentMethod_checkIfEnds",
+            "to": "currentMethod_exists"
+        },
+        {
+            "from": "currentMethod_checkIfEnds",
+            "to": "tokens_current"
+        },
+        {
+            "from": "context_checkForRoleDefinition",
+            "to": "tokens_current"
+        },
+        {
+            "from": "context_checkForRoleDefinition",
+            "to": "parser_findNext"
+        },
+        {
+            "from": "context_checkForRoleDefinition",
+            "to": "tokens_get"
+        },
+        {
+            "from": "context_checkForRoleDefinition",
+            "to": "tokens_get"
+        },
+        {
+            "from": "context_checkForRoleDefinition",
+            "to": "context_addRole"
+        },
+        {
+            "from": "context_checkIfEnds",
+            "to": "context_exists"
+        },
+        {
+            "from": "context_checkIfEnds",
+            "to": "tokens_current"
+        },
+        {
+            "from": "context_checkIfEnds",
+            "to": "context_endPos"
+        },
+        {
+            "from": "context_checkIfEnds",
+            "to": "context_checkRules"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "context_attachMethodsToRoles"
+        },
+        {
+            "from": "context_attachMethodsToRoles",
+            "to": "parser_error"
+        }
+    ]
+}
