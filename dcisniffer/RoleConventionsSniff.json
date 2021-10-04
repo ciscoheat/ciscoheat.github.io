@@ -176,6 +176,18 @@
         },
         {
             "from": "parser_checkNewMethod",
+            "to": "parser_findNext"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "tokens_get"
+        },
+        {
+            "from": "parser_checkNewMethod",
+            "to": "tokens_get"
+        },
+        {
+            "from": "parser_checkNewMethod",
             "to": "context_addMethod"
         },
         {
@@ -185,6 +197,18 @@
         {
             "from": "currentMethod_checkForReferences",
             "to": "parser_findNext"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "tokens_get"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "tokens_get"
+        },
+        {
+            "from": "currentMethod_checkForReferences",
+            "to": "tokens_get"
         },
         {
             "from": "currentMethod_checkForReferences",
@@ -209,6 +233,10 @@
         {
             "from": "context_checkForRoleDefinition",
             "to": "parser_findNext"
+        },
+        {
+            "from": "context_checkForRoleDefinition",
+            "to": "tokens_get"
         },
         {
             "from": "context_checkForRoleDefinition",
