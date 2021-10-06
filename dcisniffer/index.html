@@ -1,74 +1,14 @@
-<!doctype html>
-<html>
-<head>
-    <meta charset="utf-8"/>
+<!DOCTYPE html><html><head>
+    <meta charset="utf-8">
     <title>DCI Context visualization</title>
 
-    <link rel="stylesheet" type="text/css" href="vis/vis-network.min.css" />
-    <style>
-        /* Reset */
-        html {
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        
-        *, *:before, *:after {
-            box-sizing: inherit;
-        }
-        
-        body, h1, h2, h3, h4, h5, h6, p, ol, ul {
-            margin: 0;
-            padding: 0;
-            font-weight: normal;
-        }
-        
-        ol, ul {
-            list-style: none;
-        }
-        
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        /* Page CSS */
-        #toolbar {
-            width: 100vw;
-            height: 30px;
-            background-color: aliceblue;
-            padding: 3px;
-        }
-
-        #mynetwork {
-            width: 100vw;
-            height: calc(100vh - 30px);
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="css/vis-network.min.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>html{box-sizing:border-box;font-size:16px}*,*:before,*:after{box-sizing:inherit}body,h1,h2,h3,h4,h5,h6,p,ol,ul{margin:0;padding:0;font-weight:normal}ol,ul{list-style:none}img{max-width:100%;height:auto}#toolbar{width:100vw;height:30px;background-color:#f0f8ff;padding:3px}#mynetwork{width:100vw;height:calc(100vh - 30px)}
+</style>
 </head>
 <body>
-    <div id="toolbar">
-        <input type="checkbox" id="interactions"> Interactions only
-    </div>
-    <div id="mynetwork"></div>
+    <script type="module" src="app.js"></script>
 
-    <script type="text/javascript" src="vis/vis-data.min.js"></script>
-    <script type="text/javascript" src="vis/vis-network.min.js"></script>
 
-    <script type="text/javascript" src="visualizecontext.js"></script>
-    
-    <script>
-        fetch("RoleConventionsSniff.json")
-        .then(response => response.json())
-        .then(json => {
-            const visualize = new VisualizeContext(
-                json.nodes, 
-                json.edges, 
-                document.querySelector('#mynetwork'),
-                document.querySelector('#toolbar')
-            )
-
-            visualize.start()
-        })
-    </script>
-</body>
-</html>
+</body></html>
