@@ -51,11 +51,6 @@
             "group": "currentMethod"
         },
         {
-            "id": "currentMethod_addRef",
-            "label": "currentMethod\naddRef",
-            "group": "currentMethod"
-        },
-        {
             "id": "currentMethod_checkIfEnds",
             "label": "currentMethod\ncheckIfEnds",
             "group": "currentMethod"
@@ -104,6 +99,10 @@
     "edges": [
         {
             "from": "process",
+            "to": "_rebind"
+        },
+        {
+            "from": "process",
             "to": "context_exists"
         },
         {
@@ -133,10 +132,6 @@
         {
             "from": "_rebind",
             "to": "currentMethod_checkIfEnds"
-        },
-        {
-            "from": "tokens_current",
-            "to": "tokens_get"
         },
         {
             "from": "parser_checkNewContext",
@@ -208,7 +203,7 @@
         },
         {
             "from": "currentMethod_checkForReferences",
-            "to": "tokens_get"
+            "to": "parser_findNext"
         },
         {
             "from": "currentMethod_checkForReferences",
@@ -216,7 +211,7 @@
         },
         {
             "from": "currentMethod_checkForReferences",
-            "to": "currentMethod_addRef"
+            "to": "tokens_get"
         },
         {
             "from": "currentMethod_checkIfEnds",
