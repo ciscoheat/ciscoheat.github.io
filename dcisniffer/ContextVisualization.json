@@ -1,0 +1,29 @@
+{
+    "nodes": [
+        {
+            "id": "saveVisData",
+            "label": "saveVisData",
+            "group": "__CONTEXT"
+        },
+        {
+            "id": "methods_convertToVisData",
+            "label": "methods\nconvertToVisData",
+            "group": "methods"
+        },
+        {
+            "id": "methods_saveData",
+            "label": "<i>methods<\/i>\n<i>saveData<\/i>",
+            "group": "methods"
+        }
+    ],
+    "edges": [
+        {
+            "from": "saveVisData",
+            "to": "methods_convertToVisData"
+        },
+        {
+            "from": "methods_convertToVisData",
+            "to": "methods_saveData"
+        }
+    ]
+}

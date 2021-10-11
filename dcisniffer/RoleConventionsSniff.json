@@ -62,12 +62,12 @@
         },
         {
             "id": "context_endPos",
-            "label": "context\nendPos",
+            "label": "<i>context<\/i>\n<i>endPos<\/i>",
             "group": "context"
         },
         {
             "id": "context_addRole",
-            "label": "context\naddRole",
+            "label": "<i>context<\/i>\n<i>addRole<\/i>",
             "group": "context"
         },
         {
@@ -87,12 +87,12 @@
         },
         {
             "id": "context_checkRules",
-            "label": "context\ncheckRules",
+            "label": "<i>context<\/i>\n<i>checkRules<\/i>",
             "group": "context"
         },
         {
             "id": "context_attachMethodsToRoles",
-            "label": "context\nattachMethodsToRoles",
+            "label": "<i>context<\/i>\n<i>attachMethodsToRoles<\/i>",
             "group": "context"
         }
     ],

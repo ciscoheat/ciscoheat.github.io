@@ -1,0 +1,66 @@
+{
+    "nodes": [
+        {
+            "id": "listInformation",
+            "label": "listInformation",
+            "group": "__CONTEXT"
+        },
+        {
+            "id": "parser_warning",
+            "label": "parser\nwarning",
+            "group": "parser"
+        },
+        {
+            "id": "context_methodNamed",
+            "label": "<i>context<\/i>\n<i>methodNamed<\/i>",
+            "group": "context"
+        },
+        {
+            "id": "context_listInformation",
+            "label": "context\nlistInformation",
+            "group": "context"
+        }
+    ],
+    "edges": [
+        {
+            "from": "listInformation",
+            "to": "context_listInformation"
+        },
+        {
+            "from": "context_listInformation",
+            "to": "parser_warning"
+        },
+        {
+            "from": "context_listInformation",
+            "to": "parser_warning"
+        },
+        {
+            "from": "context_listInformation",
+            "to": "context_methodNamed"
+        },
+        {
+            "from": "context_listInformation",
+            "to": "parser_warning"
+        },
+        {
+            "from": "context_listInformation",
+            "to": "context_methodNamed"
+        },
+        {
+            "from": "context_listInformation",
+            "to": "parser_warning"
+        },
+        {
+            "from": "context_listInformation",
+            "to": "parser_warning"
+        },
+        {
+            "from": "context_listInformation",
+            "to": "parser_warning"
+        },
+        {
+            "from": "context_listInformation",
+            "to": "parser_warning"
+        }
+    ]
+}

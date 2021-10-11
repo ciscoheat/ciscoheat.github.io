@@ -1,0 +1,92 @@
+{
+    "nodes": [
+        {
+            "id": "check",
+            "label": "check",
+            "group": "__CONTEXT"
+        },
+        {
+            "id": "parser_error",
+            "label": "parser\nerror",
+            "group": "parser"
+        },
+        {
+            "id": "context_roleNames",
+            "label": "<i>context<\/i>\n<i>roleNames<\/i>",
+            "group": "context"
+        },
+        {
+            "id": "context_methodNamed",
+            "label": "<i>context<\/i>\n<i>methodNamed<\/i>",
+            "group": "context"
+        },
+        {
+            "id": "context_checkRoleMethodPositions",
+            "label": "<i>context<\/i>\n<i>checkRoleMethodPositions<\/i>",
+            "group": "context"
+        },
+        {
+            "id": "context_checkRules",
+            "label": "context\ncheckRules",
+            "group": "context"
+        }
+    ],
+    "edges": [
+        {
+            "from": "check",
+            "to": "context_checkRules"
+        },
+        {
+            "from": "context_checkRoleMethodPositions",
+            "to": "parser_error"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "context_checkRoleMethodPositions"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "parser_error"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "parser_error"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "parser_error"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "context_methodNamed"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "parser_error"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "context_roleNames"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "parser_error"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "parser_error"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "parser_error"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "context_methodNamed"
+        },
+        {
+            "from": "context_checkRules",
+            "to": "parser_error"
+        }
+    ]
+}
