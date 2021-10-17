@@ -1,29 +1,69 @@
 {
-    "nodes": [
-        {
-            "id": "saveVisData",
-            "label": "saveVisData",
-            "group": "__CONTEXT"
-        },
-        {
-            "id": "methods_convertToVisData",
-            "label": "methods\nconvertToVisData",
-            "group": "methods"
-        },
-        {
-            "id": "methods_saveData",
-            "label": "<i>methods<\/i>\n<i>saveData<\/i>",
-            "group": "methods"
+    "name": "ContextVisualization",
+    "roles": {
+        "context": {
+            "name": "context",
+            "access": 356,
+            "methods": {
+                "saveJson": "context_saveJson"
+            },
+            "tags": []
         }
-    ],
-    "edges": [
-        {
-            "from": "saveVisData",
-            "to": "methods_convertToVisData"
+    },
+    "methods": {
+        "__construct": {
+            "fullName": "__construct",
+            "access": 358,
+            "refs": [
+                {
+                    "to": "context",
+                    "type": 4,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "_fileName",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": null,
+            "tags": []
         },
-        {
-            "from": "methods_convertToVisData",
-            "to": "methods_saveData"
+        "saveJson": {
+            "fullName": "saveJson",
+            "access": 358,
+            "refs": [
+                {
+                    "to": "context_saveJson",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": null,
+            "tags": []
+        },
+        "context_saveJson": {
+            "fullName": "context_saveJson",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "_fileName",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": "context",
+            "tags": []
         }
-    ]
+    }
 }

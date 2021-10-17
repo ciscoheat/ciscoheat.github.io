@@ -1,92 +1,214 @@
 {
-    "nodes": [
-        {
-            "id": "check",
-            "label": "check",
-            "group": "__CONTEXT"
+    "name": "CheckDCIRules",
+    "roles": {
+        "parser": {
+            "name": "parser",
+            "access": 356,
+            "methods": {
+                "error": "parser_error"
+            },
+            "tags": []
         },
-        {
-            "id": "parser_error",
-            "label": "parser\nerror",
-            "group": "parser"
-        },
-        {
-            "id": "context_roleNames",
-            "label": "<i>context<\/i>\n<i>roleNames<\/i>",
-            "group": "context"
-        },
-        {
-            "id": "context_methodNamed",
-            "label": "<i>context<\/i>\n<i>methodNamed<\/i>",
-            "group": "context"
-        },
-        {
-            "id": "context_checkRoleMethodPositions",
-            "label": "<i>context<\/i>\n<i>checkRoleMethodPositions<\/i>",
-            "group": "context"
-        },
-        {
-            "id": "context_checkRules",
-            "label": "context\ncheckRules",
-            "group": "context"
+        "context": {
+            "name": "context",
+            "access": 356,
+            "methods": {
+                "roleNames": "context_roleNames",
+                "methodNamed": "context_methodNamed",
+                "checkRoleMethodPositions": "context_checkRoleMethodPositions",
+                "checkRules": "context_checkRules"
+            },
+            "tags": []
         }
-    ],
-    "edges": [
-        {
-            "from": "check",
-            "to": "context_checkRules"
+    },
+    "methods": {
+        "__construct": {
+            "fullName": "__construct",
+            "access": 358,
+            "refs": [
+                {
+                    "to": "parser",
+                    "type": 4,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 4,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": null,
+            "tags": []
         },
-        {
-            "from": "context_checkRoleMethodPositions",
-            "to": "parser_error"
+        "check": {
+            "fullName": "check",
+            "access": 358,
+            "refs": [
+                {
+                    "to": "context_checkRules",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": null,
+            "tags": []
         },
-        {
-            "from": "context_checkRules",
-            "to": "context_checkRoleMethodPositions"
+        "parser_error": {
+            "fullName": "parser_error",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "parser",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "addError"
+                }
+            ],
+            "role": "parser",
+            "tags": []
         },
-        {
-            "from": "context_checkRules",
-            "to": "parser_error"
+        "context_roleNames": {
+            "fullName": "context_roleNames",
+            "access": 356,
+            "refs": [
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "roles"
+                }
+            ],
+            "role": "context",
+            "tags": []
         },
-        {
-            "from": "context_checkRules",
-            "to": "parser_error"
+        "context_methodNamed": {
+            "fullName": "context_methodNamed",
+            "access": 356,
+            "refs": [
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "methods"
+                }
+            ],
+            "role": "context",
+            "tags": []
         },
-        {
-            "from": "context_checkRules",
-            "to": "parser_error"
+        "context_checkRoleMethodPositions": {
+            "fullName": "context_checkRoleMethodPositions",
+            "access": 356,
+            "refs": [
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "methods"
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": "context",
+            "tags": []
         },
-        {
-            "from": "context_checkRules",
-            "to": "context_methodNamed"
-        },
-        {
-            "from": "context_checkRules",
-            "to": "parser_error"
-        },
-        {
-            "from": "context_checkRules",
-            "to": "context_roleNames"
-        },
-        {
-            "from": "context_checkRules",
-            "to": "parser_error"
-        },
-        {
-            "from": "context_checkRules",
-            "to": "parser_error"
-        },
-        {
-            "from": "context_checkRules",
-            "to": "parser_error"
-        },
-        {
-            "from": "context_checkRules",
-            "to": "context_methodNamed"
-        },
-        {
-            "from": "context_checkRules",
-            "to": "parser_error"
+        "context_checkRules": {
+            "fullName": "context_checkRules",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "context_checkRoleMethodPositions",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "roles"
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "methods"
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context_methodNamed",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context_roleNames",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context_methodNamed",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": "context",
+            "tags": []
         }
-    ]
+    }
 }

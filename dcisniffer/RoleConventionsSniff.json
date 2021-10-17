@@ -1,269 +1,616 @@
 {
-    "nodes": [
-        {
-            "id": "process",
-            "label": "process",
-            "group": "__CONTEXT"
+    "name": "RoleConventionsSniff",
+    "roles": {
+        "tokens": {
+            "name": "tokens",
+            "access": 356,
+            "methods": {
+                "get": "tokens_get"
+            },
+            "tags": []
         },
-        {
-            "id": "_rebind",
-            "label": "_rebind",
-            "group": "__CONTEXT"
+        "parser": {
+            "name": "parser",
+            "access": 356,
+            "methods": {
+                "findNext": "parser_findNext",
+                "error": "parser_error",
+                "checkNewContext": "parser_checkNewContext",
+                "checkNewMethod": "parser_checkNewMethod"
+            },
+            "tags": []
         },
-        {
-            "id": "tokens_current",
-            "label": "tokens\ncurrent",
-            "group": "tokens"
+        "currentMethod": {
+            "name": "currentMethod",
+            "access": 356,
+            "methods": {
+                "exists": "currentMethod_exists",
+                "checkForReferences": "currentMethod_checkForReferences",
+                "checkIfEnds": "currentMethod_checkIfEnds"
+            },
+            "tags": []
         },
-        {
-            "id": "tokens_get",
-            "label": "tokens\nget",
-            "group": "tokens"
-        },
-        {
-            "id": "parser_findNext",
-            "label": "parser\nfindNext",
-            "group": "parser"
-        },
-        {
-            "id": "parser_error",
-            "label": "parser\nerror",
-            "group": "parser"
-        },
-        {
-            "id": "parser_checkNewContext",
-            "label": "parser\ncheckNewContext",
-            "group": "parser"
-        },
-        {
-            "id": "parser_checkNewMethod",
-            "label": "parser\ncheckNewMethod",
-            "group": "parser"
-        },
-        {
-            "id": "currentMethod_exists",
-            "label": "currentMethod\nexists",
-            "group": "currentMethod"
-        },
-        {
-            "id": "currentMethod_checkForReferences",
-            "label": "currentMethod\ncheckForReferences",
-            "group": "currentMethod"
-        },
-        {
-            "id": "currentMethod_checkIfEnds",
-            "label": "currentMethod\ncheckIfEnds",
-            "group": "currentMethod"
-        },
-        {
-            "id": "context_exists",
-            "label": "context\nexists",
-            "group": "context"
-        },
-        {
-            "id": "context_endPos",
-            "label": "<i>context<\/i>\n<i>endPos<\/i>",
-            "group": "context"
-        },
-        {
-            "id": "context_addRole",
-            "label": "<i>context<\/i>\n<i>addRole<\/i>",
-            "group": "context"
-        },
-        {
-            "id": "context_addMethod",
-            "label": "context\naddMethod",
-            "group": "context"
-        },
-        {
-            "id": "context_checkForRoleDefinition",
-            "label": "context\ncheckForRoleDefinition",
-            "group": "context"
-        },
-        {
-            "id": "context_checkIfEnds",
-            "label": "context\ncheckIfEnds",
-            "group": "context"
-        },
-        {
-            "id": "context_checkRules",
-            "label": "<i>context<\/i>\n<i>checkRules<\/i>",
-            "group": "context"
-        },
-        {
-            "id": "context_attachMethodsToRoles",
-            "label": "<i>context<\/i>\n<i>attachMethodsToRoles<\/i>",
-            "group": "context"
+        "context": {
+            "name": "context",
+            "access": 356,
+            "methods": {
+                "exists": "context_exists",
+                "addMethod": "context_addMethod",
+                "checkForRoleDefinition": "context_checkForRoleDefinition",
+                "checkIfEnds": "context_checkIfEnds",
+                "checkRules": "context_checkRules",
+                "attachMethodsToRoles": "context_attachMethodsToRoles"
+            },
+            "tags": []
         }
-    ],
-    "edges": [
-        {
-            "from": "process",
-            "to": "_rebind"
+    },
+    "methods": {
+        "register": {
+            "fullName": "register",
+            "access": 358,
+            "refs": [],
+            "role": null,
+            "tags": [
+                "return"
+            ]
         },
-        {
-            "from": "process",
-            "to": "context_exists"
+        "process": {
+            "fullName": "process",
+            "access": 358,
+            "refs": [
+                {
+                    "to": "_rebind",
+                    "type": 0,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context_exists",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "currentMethod_exists",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context_checkForRoleDefinition",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "currentMethod_checkForReferences",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": null,
+            "tags": [
+                "return",
+                "param",
+                "param"
+            ]
         },
-        {
-            "from": "process",
-            "to": "currentMethod_exists"
+        "_rebind": {
+            "fullName": "_rebind",
+            "access": 356,
+            "refs": [
+                {
+                    "to": "parser",
+                    "type": 4,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "tokens",
+                    "type": 4,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "_stackPtr",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_checkNewContext",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 4,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_checkNewMethod",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "currentMethod",
+                    "type": 4,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context_checkIfEnds",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 4,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "currentMethod_checkIfEnds",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "currentMethod",
+                    "type": 4,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": null,
+            "tags": []
         },
-        {
-            "from": "process",
-            "to": "context_checkForRoleDefinition"
+        "tokens_get": {
+            "fullName": "tokens_get",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "tokens",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "__ARRAY"
+                }
+            ],
+            "role": "tokens",
+            "tags": []
         },
-        {
-            "from": "process",
-            "to": "currentMethod_checkForReferences"
+        "parser_findNext": {
+            "fullName": "parser_findNext",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "_stackPtr",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "findNext"
+                },
+                {
+                    "to": "parser",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "getTokens"
+                }
+            ],
+            "role": "parser",
+            "tags": []
         },
-        {
-            "from": "_rebind",
-            "to": "parser_checkNewContext"
+        "parser_error": {
+            "fullName": "parser_error",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "parser",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "addError"
+                }
+            ],
+            "role": "parser",
+            "tags": []
         },
-        {
-            "from": "_rebind",
-            "to": "parser_checkNewMethod"
+        "parser_checkNewContext": {
+            "fullName": "parser_checkNewContext",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "context_exists",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_findNext",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "getDeclarationName"
+                }
+            ],
+            "role": "parser",
+            "tags": []
         },
-        {
-            "from": "_rebind",
-            "to": "context_checkIfEnds"
+        "parser_checkNewMethod": {
+            "fullName": "parser_checkNewMethod",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "context_exists",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "currentMethod_exists",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_findNext",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_findNext",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "_stackPtr",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "tokens_get",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context_addMethod",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": "parser",
+            "tags": []
         },
-        {
-            "from": "_rebind",
-            "to": "currentMethod_checkIfEnds"
+        "currentMethod_exists": {
+            "fullName": "currentMethod_exists",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "currentMethod",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": "currentMethod",
+            "tags": []
         },
-        {
-            "from": "parser_checkNewContext",
-            "to": "context_exists"
+        "currentMethod_checkForReferences": {
+            "fullName": "currentMethod_checkForReferences",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "parser_findNext",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "tokens_get",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "_ignoredRoles",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "roleMethodFormat",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "roleFormat",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "tokens_get",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_findNext",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "tokens_get",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "_stackPtr",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "currentMethod",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "addRef"
+                }
+            ],
+            "role": "currentMethod",
+            "tags": []
         },
-        {
-            "from": "parser_checkNewContext",
-            "to": "tokens_current"
+        "currentMethod_checkIfEnds": {
+            "fullName": "currentMethod_checkIfEnds",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "currentMethod_exists",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "currentMethod",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "end"
+                }
+            ],
+            "role": "currentMethod",
+            "tags": []
         },
-        {
-            "from": "parser_checkNewContext",
-            "to": "parser_findNext"
+        "context_exists": {
+            "fullName": "context_exists",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": "context",
+            "tags": []
         },
-        {
-            "from": "parser_checkNewContext",
-            "to": "tokens_get"
+        "context_addMethod": {
+            "fullName": "context_addMethod",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "roleMethodFormat",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "_addMethodToRole",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "addMethod"
+                }
+            ],
+            "role": "context",
+            "tags": []
         },
-        {
-            "from": "parser_checkNewMethod",
-            "to": "context_exists"
+        "context_checkForRoleDefinition": {
+            "fullName": "context_checkForRoleDefinition",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "parser_findNext",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "tokens_get",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "roleFormat",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "_stackPtr",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "tokens_get",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "_ignoredRoles",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "addRole"
+                }
+            ],
+            "role": "context",
+            "tags": []
         },
-        {
-            "from": "parser_checkNewMethod",
-            "to": "currentMethod_exists"
+        "context_checkIfEnds": {
+            "fullName": "context_checkIfEnds",
+            "access": 357,
+            "refs": [
+                {
+                    "to": "context_exists",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "end"
+                },
+                {
+                    "to": "context_checkRules",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": "context",
+            "tags": []
         },
-        {
-            "from": "parser_checkNewMethod",
-            "to": "tokens_current"
+        "context_checkRules": {
+            "fullName": "context_checkRules",
+            "access": 356,
+            "refs": [
+                {
+                    "to": "context_attachMethodsToRoles",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser",
+                    "type": 3,
+                    "excepted": true,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser",
+                    "type": 3,
+                    "excepted": true,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "listRoleInterfaces",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "visDataDir",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "visDataDir",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": "context",
+            "tags": []
         },
-        {
-            "from": "parser_checkNewMethod",
-            "to": "parser_findNext"
-        },
-        {
-            "from": "parser_checkNewMethod",
-            "to": "tokens_get"
-        },
-        {
-            "from": "parser_checkNewMethod",
-            "to": "parser_findNext"
-        },
-        {
-            "from": "parser_checkNewMethod",
-            "to": "tokens_get"
-        },
-        {
-            "from": "parser_checkNewMethod",
-            "to": "tokens_get"
-        },
-        {
-            "from": "parser_checkNewMethod",
-            "to": "context_addMethod"
-        },
-        {
-            "from": "currentMethod_checkForReferences",
-            "to": "tokens_current"
-        },
-        {
-            "from": "currentMethod_checkForReferences",
-            "to": "parser_findNext"
-        },
-        {
-            "from": "currentMethod_checkForReferences",
-            "to": "tokens_get"
-        },
-        {
-            "from": "currentMethod_checkForReferences",
-            "to": "tokens_get"
-        },
-        {
-            "from": "currentMethod_checkForReferences",
-            "to": "parser_findNext"
-        },
-        {
-            "from": "currentMethod_checkForReferences",
-            "to": "tokens_get"
-        },
-        {
-            "from": "currentMethod_checkForReferences",
-            "to": "tokens_get"
-        },
-        {
-            "from": "currentMethod_checkIfEnds",
-            "to": "currentMethod_exists"
-        },
-        {
-            "from": "currentMethod_checkIfEnds",
-            "to": "tokens_current"
-        },
-        {
-            "from": "context_checkForRoleDefinition",
-            "to": "tokens_current"
-        },
-        {
-            "from": "context_checkForRoleDefinition",
-            "to": "parser_findNext"
-        },
-        {
-            "from": "context_checkForRoleDefinition",
-            "to": "tokens_get"
-        },
-        {
-            "from": "context_checkForRoleDefinition",
-            "to": "tokens_get"
-        },
-        {
-            "from": "context_checkForRoleDefinition",
-            "to": "context_addRole"
-        },
-        {
-            "from": "context_checkIfEnds",
-            "to": "context_exists"
-        },
-        {
-            "from": "context_checkIfEnds",
-            "to": "tokens_current"
-        },
-        {
-            "from": "context_checkIfEnds",
-            "to": "context_endPos"
-        },
-        {
-            "from": "context_checkIfEnds",
-            "to": "context_checkRules"
-        },
-        {
-            "from": "context_checkRules",
-            "to": "context_attachMethodsToRoles"
-        },
-        {
-            "from": "context_attachMethodsToRoles",
-            "to": "parser_error"
+        "context_attachMethodsToRoles": {
+            "fullName": "context_attachMethodsToRoles",
+            "access": 356,
+            "refs": [
+                {
+                    "to": "context",
+                    "type": 3,
+                    "excepted": false,
+                    "contractCall": "roles"
+                },
+                {
+                    "to": "_addMethodToRole",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "parser_error",
+                    "type": 2,
+                    "excepted": false,
+                    "contractCall": null
+                },
+                {
+                    "to": "_addMethodToRole",
+                    "type": 1,
+                    "excepted": false,
+                    "contractCall": null
+                }
+            ],
+            "role": "context",
+            "tags": []
         }
-    ]
+    }
 }
